@@ -1,0 +1,118 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blocked by Firewall</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 900px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .http-status {
+            font-size: 36px;
+            color: #d9534f;
+            margin-bottom: 30px;
+        }
+
+        .header {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 10px;
+            color: #721c24;
+        }
+
+            .message h2 {
+                color: #a94442;
+                font-size: 28px;
+                margin-bottom: 10px;
+            }
+
+            .message p {
+                font-size: 18px;
+                color: #a94442;
+            }
+
+        footer {
+            margin-top: 30px;
+            font-size: 16px;
+            color: #666;
+        }
+    </style>
+
+    <script>
+        // Function to get URL parameters
+        function getQueryParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                site: params.get('site') || 'Unknown',
+                resp: params.get('resp') || 'No reason provided',
+                DT: params.get('DT') || new Date().toISOString().slice(0, 19).replace('T', ' '),
+                info: params.get('info') || ''
+            };
+        }
+
+        // Decode URL parameters and display them on the page
+        document.addEventListener('DOMContentLoaded', () => {
+            const { site, resp, DT, info } = getQueryParams();
+
+            // Populate the page with the decoded information
+            document.getElementById('blocked-site').textContent = decodeURIComponent(site);
+            document.getElementById('block-time').textContent = decodeURIComponent(DT);
+            document.getElementById('response-status').textContent = decodeURIComponent(resp);
+            document.getElementById('additional-info').textContent = decodeURIComponent(info);
+        });
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1 class="http-status">HTTP/1.1 403 Forbidden</h1>
+        <p class="header">Server: MyFirewall</p>
+        <p class="header">Date: <span id="block-time">Loading...</span></p>
+        <p class="header">Content-Type: text/html; charset=UTF-8</p>
+        <p class="header">Content-Length: 636</p>
+        <p class="header">Connection: close</p>
+
+        <div class="message">
+            <h2>Blocked by Firewall</h2>
+            <p>Your request to <span id="blocked-site">Loading...</span> was blocked due to the following reason: <span id="response-status">Loading...</span>.</p>
+            <p>Additional Information: <span id="additional-info">Loading...</span></p>
+        </div>
+
+        <footer>
+            <p>&copy; 2024 ProxyBased Corporation</p>
+        </footer>
+    </div>
+</body>
+</html>

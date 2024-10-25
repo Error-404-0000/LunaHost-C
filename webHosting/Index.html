@@ -1,0 +1,435 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LivaVista - Приватные Транзакции и Полная Свобода</title>
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons CDN -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="test/Index.css"/>
+    <style>
+        body {
+            background-color: #181818;
+            color: #e0e0e0;
+            font-family: 'Roboto', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background: url('https://yourimageurl.com/secure-bg.jpg') no-repeat center center;
+            background-size: cover;
+            padding: 120px 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero-section h1 {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #ffffff;
+            letter-spacing: 2px;
+        }
+
+        .hero-section p {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+        }
+
+        .hero-section .btn {
+            background-color: #00aaff;
+            color: #ffffff;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        .hero-section .btn:hover {
+            background-color: #0088cc;
+        }
+
+        /* Animations */
+        .hero-section h1, .hero-section p, .btn {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 1s ease forwards;
+        }
+
+        .hero-section h1 { animation-delay: 0.3s; }
+        .hero-section p { animation-delay: 0.6s; }
+        .btn { animation-delay: 0.9s; }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Feature Boxes */
+        .features-section {
+            padding: 60px 0;
+        }
+
+        .feature-box {
+            background-color: #282828;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-box:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .feature-box i {
+            font-size: 2rem;
+            color: #00aaff;
+            margin-bottom: 15px;
+        }
+
+        .feature-box h5 {
+            font-size: 1.3rem;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        .feature-box p {
+            color: #bfbfbf;
+            font-size: 1rem;
+        }
+
+        /* Passcode Generation Section */
+        .passcode-gen-section {
+            background-color: #181818;
+            padding: 80px 0;
+            color: #ffffff;
+        }
+
+        .passcode-gen-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .passcode-gen-section p {
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .passcode-gen-section .btn {
+            background-color: #00aaff;
+            color: #ffffff;
+            border-radius: 5px;
+            padding: 12px 25px;
+            margin-top: 20px;
+        }
+
+        .passcode-gen-section .btn:hover {
+            background-color: #0088cc;
+        }
+
+        /* Testimonials Section */
+        .testimonials-section {
+            background-color: #222;
+            padding: 60px 0;
+            text-align: center;
+        }
+
+        .testimonials-section h2 {
+            color: #00aaff;
+            margin-bottom: 40px;
+        }
+
+        .testimonials-section .testimonial {
+            background-color: #282828;
+            padding: 20px;
+            margin: 10px;
+            border-radius: 10px;
+            color: #bfbfbf;
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            background-color: #181818;
+            padding: 60px 0;
+        }
+
+        .faq-section h2 {
+            font-size: 2.2rem;
+            color: #ffffff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .faq-section .accordion-button {
+            background-color: #282828;
+            color: #ffffff;
+            border: none;
+        }
+
+        .faq-section .accordion-button:not(.collapsed) {
+            background-color: #00aaff;
+            color: #ffffff;
+        }
+
+        /* Contact Section */
+        .contact-section {
+            background-color: #282828;
+            padding: 60px 0;
+            color: #ffffff;
+        }
+
+        .contact-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .contact-section p {
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-section h1 {
+                font-size: 2.2rem;
+            }
+
+            .feature-box {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <h1>Добро Пожаловать в LivaVista</h1>
+            <p>Уникальная платформа для полного контроля и конфиденциальных транзакций.</p>
+            <a href="#features" class="btn">Узнать Больше</a>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features-section container">
+        <h2 class="text-center mb-5">Почему LivaVista?</h2>
+        <div class="row text-center">
+            <div class="col-md-4">
+                <div class="feature-box">
+                    <i class="bi bi-shield-lock-fill"></i>
+                    <h5>Персональные Пароли</h5>
+                    <p>Каждому пользователю генерируется уникальный пароль, обеспечивающий полную безопасность и анонимность.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-box">
+                    <i class="bi bi-eye-slash-fill"></i>
+                    <h5>Конфиденциальные Операции</h5>
+                    <p>Ваши транзакции остаются только между вами и системой — без стороннего контроля.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-box">
+                    <i class="bi bi-lightning-fill"></i>
+                    <h5>Мгновенные Выплаты</h5>
+                    <p>Выводите средства мгновенно и без задержек, с минимальными комиссиями.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Passcode Generation Section -->
+    <section class="passcode-gen-section">
+        <div class="container">
+            <h2>Как Работает Персональный Пароль?</h2>
+            <p>Ваш уникальный пароль создается на основе данных устройства и действий в системе, и обеспечивает максимальную защиту ваших активов.</p>
+            <p>Только вы имеете доступ к вашему паролю — без посторонних глаз и слежки.</p>
+            <div class="text-center">
+                <a href="#" class="btn">Получить Пароль</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials-section">
+        <div class="container">
+            <h2>Отзывы Пользователей</h2>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="testimonial">
+                        <p>"LivaVista изменила мой подход к транзакциям. Безопасность на высшем уровне!"</p>
+                        <h6>- Алексей</h6>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="testimonial">
+                        <p>"Теперь я уверен в конфиденциальности своих операций. Никаких скрытых угроз!"</p>
+                        <h6>- Мария</h6>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="testimonial">
+                        <p>"Удобство и контроль над платежами — это всё, что мне нужно."</p>
+                        <h6>- Дмитрий</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <div class="container">
+            <h2>Часто Задаваемые Вопросы</h2>
+            <div class="accordion" id="faqAccordion">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
+                            Как работает система персональных паролей?
+                        </button>
+                    </h2>
+                    <div id="collapseOne" class="accordion-collapse collapse show">
+                        <div class="accordion-body">
+                            Каждый пользователь получает уникальный персональный пароль, основанный на данных вашего устройства, таких как модель, операционная система и IP-адрес. Это гарантирует, что только ваше устройство может авторизоваться в системе. Пример: если ваше устройство — iPhone 13 Pro, ваш персональный пароль будет связан с этим устройством и станет недействительным при попытке входа с другого.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
+                            Есть ли лимиты на выплаты?
+                        </button>
+                    </h2>
+                    <div id="collapseTwo" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            В LivaVista отсутствуют лимиты на ежедневные выплаты. Вы можете выводить средства сколько угодно раз в течение дня, будь то $500 или $50,000, всё доступно для мгновенной выплаты без комиссий. Пример: сегодня вы заработали $7,000 — вы сможете вывести всю сумму сразу, без ограничений или комиссий.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
+                            Как система защищает мои данные?
+                        </button>
+                    </h2>
+                    <div id="collapseThree" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            Мы используем шифрование военного уровня для защиты всех пользовательских данных. Вся информация шифруется на уровне устройства и не сохраняется в открытом виде на наших серверах. Мы также регулярно обновляем наши алгоритмы безопасности для защиты от новейших угроз. Пример: при совершении транзакции ваши финансовые данные не передаются в открытом виде, а проходят через зашифрованный туннель.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour">
+                            Как я могу сбросить свой пароль?
+                        </button>
+                    </h2>
+                    <div id="collapseFour" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            Сброс пароля возможен только после подтверждения вашей личности через ваше устройство. Мы запрашиваем подтверждение через проверку устройства и вашу электронную почту. Это помогает нам убедиться, что только вы имеете доступ к своему аккаунту. Пример: если вы забыли пароль, вы можете пройти процесс восстановления через SMS на номер вашего устройства.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive">
+                            Существует ли поддержка для клиентов?
+                        </button>
+                    </h2>
+                    <div id="collapseFive" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            Наша поддержка доступна только для зарегистрированных пользователей через защищенные каналы. Мы используем платформы, такие как Telegram и зашифрованные email-сервисы для связи. Пример: после регистрации вы получите доступ к нашему закрытому Telegram-каналу для оперативной поддержки.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSix">
+                            Как часто меняется домен платформы?
+                        </button>
+                    </h2>
+                    <div id="collapseSix" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            Мы меняем домен каждый раз, когда видим подозрительную активность, чтобы обеспечить максимальную безопасность наших пользователей. Это позволяет защитить платформу от слежки и возможных атак. Пример: если мы замечаем попытку мониторинга на livavista.net, мы можем перенести весь сайт на livavista.ru в течение нескольких минут.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeven">
+                            Как быстро я могу вывести средства?
+                        </button>
+                    </h2>
+                    <div id="collapseSeven" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            Вывод средств возможен в любое время без задержек. Независимо от суммы, вывод занимает не более нескольких секунд. Пример: запрос на вывод $10,000 в 2 часа ночи будет обработан так же быстро, как и в течение рабочего дня.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEight">
+                            Можно ли создавать несколько аккаунтов?
+                        </button>
+                    </h2>
+                    <div id="collapseEight" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            Да, вы можете создать несколько аккаунтов с различными настройками для каждого из них. Каждый аккаунт получит уникальный персональный пароль и набор настроек безопасности. Пример: если у вас несколько проектов или команд, вы можете создать отдельные аккаунты с разными уровнями доступа и персональными паролями для каждого.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNine">
+                            Какие данные необходимы для регистрации?
+                        </button>
+                    </h2>
+                    <div id="collapseNine" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            Мы запрашиваем минимальный набор данных для создания аккаунта, включая ваше устройство и IP-адрес для генерации уникального пароля. Пример: вам не нужно предоставлять паспортные данные или другие личные документы для регистрации, только минимальная информация для безопасности.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Contact Section -->
+    <section class="contact-section">
+        <div class="container">
+            <h2>Свяжитесь С Нами</h2>
+            <p>Если у вас есть вопросы, обратитесь к нам через безопасные каналы связи.</p>
+            <div class="text-center">
+                <a href="mailto:support@livavista.com" class="btn btn-primary">Отправить Сообщение</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="text-center py-4">
+        <p>&copy; 2024 LivaVista. Безопасные и конфиденциальные транзакции. Мы никогда не следим за вашими действиями.</p>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
