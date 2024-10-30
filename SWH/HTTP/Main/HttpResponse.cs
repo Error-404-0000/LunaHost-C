@@ -31,24 +31,21 @@ namespace SWH.HTTP.Main
             Headers["Content-Length"] = Encoding.UTF8.GetByteCount(content).ToString();
         }
 
-        // Build the full HTTP response string (headers + body)
         public string GetFullResponse()
         {
             StringBuilder responseBuilder = new StringBuilder();
 
-            // Status line (e.g., HTTP/1.1 200 OK)
+         
             responseBuilder.AppendLine($"HTTP/1.1 {StatusCode} {ReasonPhrase}");
 
-            // Add headers
+            
             foreach (var header in Headers)
             {
                 responseBuilder.AppendLine($"{header.Key}: {header.Value}");
             }
 
-            // Blank line to separate headers and body
             responseBuilder.AppendLine();
 
-            // Add body
             if (!string.IsNullOrEmpty(Body))
             {
                 responseBuilder.Append(Body);
@@ -57,7 +54,6 @@ namespace SWH.HTTP.Main
             return responseBuilder.ToString();
         }
 
-        // Commonly used response creators for ease
         public static HttpResponse OK(string body = "OK")
         {
             var response = new HttpResponse();

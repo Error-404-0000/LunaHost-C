@@ -17,7 +17,7 @@ namespace SWH
     {
         private List<PageContent> pageContents;
         public ushort port = 80;
-        public IPAddress IP = IPAddress.Any;
+        public IPAddress IP = IPAddress.Loopback;
         public PageContent DefaultPage = null!;
         public SWHBuilder()
         {
@@ -35,12 +35,16 @@ namespace SWH
             Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             socket.Bind(new IPEndPoint(IP, port));
             socket.Listen(200<<5);
-            Console.WriteLine("Web Started");
+            Console.Write($"SRV -ST\nHost : {IP}\nPort : {port}\nUrl : ");
+            Console.ForegroundColor = ConsoleColor.Blue;
+            Console.Write($"http://{IP} , http://{IP}:{port}");
+            Console.ResetColor();
+
+
             await Task.Run( async() =>
             {
                 while (true)
                 {
-                    
                     _ =  HandleRequest(await socket.AcceptAsync());
                 }
             });

@@ -10,7 +10,7 @@ namespace SWH
     public partial class HttpRequest
     {
 
-        // Properties
+        // p-s
         public HttpMethod Method { get; private set; }
         public string Path { get; private set; }
         public string HttpVersion { get; private set; }
@@ -25,28 +25,25 @@ namespace SWH
 
         }
 
-        // Parsing the raw HTTP request string
         private void ParseRequest(string rawRequest)
         {
             
            
             string[] lines = rawRequest.Split(new[] { "\r\n" }, StringSplitOptions.None);
 
-            // The first line is the request line: Method, Path, HTTP Version
             string[] requestLine = lines[0].Replace("http://","")
                 .Replace("https://","").Split(' ');
             Method = ParseHttpMethod(requestLine[0]);
             Path = requestLine.Length > 1 ? requestLine[1] : "/";
             HttpVersion = requestLine.Length > 2 ? requestLine[2] : "HTTP/1.1";
 
-            // Parse headers (lines after the request line and before the empty line)
             int i = 1;
             for (; i < lines.Length; i++)
             {
                 string line = lines[i];
                 if (string.IsNullOrWhiteSpace(line))
                 {
-                    // Reached an empty line, headers are done
+                    
                     break;
                 }
 
@@ -57,7 +54,6 @@ namespace SWH
                 }
             }
 
-            // If there is a body (it comes after the empty line)
             if (i < lines.Length - 1)
             {
                 Body = string.Join("\r\n", lines[(i + 1)..]);
@@ -65,7 +61,6 @@ namespace SWH
            
         }
 
-        // Parsing the HTTP method string into an enum
         private HttpMethod ParseHttpMethod(string method)
         {
             return method switch

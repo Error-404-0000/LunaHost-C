@@ -8,7 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SWHEmail\SWHEmail.csproj" />
     <ProjectReference Include="..\SWH\SWH.csproj" />
   </ItemGroup>
 

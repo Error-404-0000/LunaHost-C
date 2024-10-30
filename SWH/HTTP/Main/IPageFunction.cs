@@ -91,7 +91,7 @@ namespace SWH.HTTP.Main
                     continue;
                 }
                 var m = method.GetCustomAttributes(true);
-                // middleware checks
+                // Проверки промежуточного ПО
                 foreach (IMiddleWare Middleware in method.GetCustomAttributes(true).Where(x => x is IMiddleWare))
                 {
                     var result = Middleware.ExcuteAsync(request, this.GetType()).Result;
@@ -103,7 +103,6 @@ namespace SWH.HTTP.Main
             
                 if (method_attribute.ContainsStaticValue)
                 {
-                    // Dictionary to store placeholder replacements
                     Dictionary<string, string> replacements = new Dictionary<string, string>();
                     
                     var static_url = Path + method_attribute.Path;
@@ -113,7 +112,7 @@ namespace SWH.HTTP.Main
                         string Route_Value = "";
                         if (string.Join("", static_url.Skip(static_url.IndexOf(Key.Value) + Key.Value.Length)) is "/" or "")
                         {
-                            //take all the url
+                            
                             Route_Value = string.Join("", request.Path.Skip(static_url.IndexOf(Key.Value)-1));
                             Route_Value = Route_Value.StartsWith('/') ? Route_Value.Substring(1) : Route_Value;
 
@@ -131,7 +130,6 @@ namespace SWH.HTTP.Main
 
                     }
 
-                    // Now apply all replacements in one go after the loop
                     foreach (var replacement in replacements)
                     {
                         method_attribute.Path = method_attribute.Path.Replace(replacement.Key, replacement.Value);
@@ -143,7 +141,7 @@ namespace SWH.HTTP.Main
 
                 if (cleanedGetAttPath != cleanedRequestPath && method_attribute.UrlType == UrlType.Match)
                 {
-                    continue; // Skip this method if paths don't match
+                    continue; 
                 }
                 var e = RemoveFirstInstanceOfSegment(method_attribute.Path!, "/");
                 if (method_attribute.UrlType == UrlType.Match)
@@ -237,31 +235,31 @@ namespace SWH.HTTP.Main
                     {
                         JObject jsonObj = JObject.Parse(request.Body);
 
-                        // If FromBody is set and has a specific name, look for that key in the JSON
+                      
                         if (FB.IsSet && !string.IsNullOrEmpty(FB.Name))
                         {
                             if (jsonObj.ContainsKey(FB.Name))
                             {
-                                // Try to convert the specific property from the JSON to the expected type
+                             
                                 var value = jsonObj[FB.Name]!.ToObject(item.ParameterType);
                                 p_set.Add(value ?? item.DefaultValue ?? null!);
                             }
                             else
                             {
-                                // Key not found, add default value
+                               
                                 p_set.Add(item.DefaultValue ?? null!);
                             }
                         }
                         else
                         {
-                            // Deserialize the whole body into the parameter type
+                          
                             var deserializedValue = JsonConvert.DeserializeObject(request.Body, item.ParameterType);
                             p_set.Add(deserializedValue ?? request.Body ?? null!);
                         }
                     }
                     catch
                     {
-                        // If any error occurs, just add the default value instead of throwing an error
+                     
                         p_set.Add(request.Body);
                     }
                 }
@@ -290,11 +288,11 @@ namespace SWH.HTTP.Main
                 return string.Empty;
             }
 
-            // Find the next '/' or '?' after the startIndex
+       
             int nextSlashIndex = path.IndexOf('/', startIndex);
             int nextQuestionMarkIndex = path.IndexOf('?', startIndex);
 
-            // Determine the nearest valid index (either '/' or '?')
+       
             int endIndex = -1;
 
             if (nextSlashIndex != -1 && nextQuestionMarkIndex != -1)
@@ -310,13 +308,13 @@ namespace SWH.HTTP.Main
                 endIndex = nextQuestionMarkIndex;
             }
 
-            // If neither '/' nor '?' is found, take the rest of the string
+         
             if (endIndex == -1)
             {
                 return path.Substring(startIndex);
             }
 
-            // Return the substring from startIndex to the next '/' or '?'
+           
             return path.Substring(startIndex, endIndex - startIndex);
         }
 
@@ -327,7 +325,7 @@ namespace SWH.HTTP.Main
             {
                 return input.Substring(questionMarkIndex + 1);
             }
-            return string.Empty; // Return an empty string if no "?" is found
+            return string.Empty; 
         }
         static string FromUrl(string fullUrl,string Name)
         {
