@@ -33,6 +33,7 @@ namespace LunaHost.HTTP.Main
         {
             this.Path = "/"+this.GetType().Name.ToLower();
         }
+      
         public bool Match(HttpRequest req)
         {
             if (req == null) return false;
@@ -50,16 +51,26 @@ namespace LunaHost.HTTP.Main
             return true;
         }
         /// <summary>
-        /// 
+        /// Tries to handle an HTTP request by finding the right page to show/reply with.
         /// </summary>
-        /// <param name="force_search">if the Handler should still try to find the route 
-        /// even if the start does not match</param>
-        /// <returns></returns>
-        public IHttpResponse HandleRequest(bool force_search = false)
+        /// <param name="httprequest">The HTTP request to handle. If you don’t give one, it will use the default.
+        /// It is like switching to a new request </param>
+        /// <param name="reset">If true, it will save the original request(default) and set it back before sending the respon</param>
+        /// <returns>Returns an HTTP response.</returns>
+        public IHttpResponse HandleRequest(HttpRequest httprequest =null!,bool reset=true)
         {
-            if (request == null && !force_search)
+            if ((request == null && httprequest == null))
                 return HttpResponse.NotFound(Path);
+            HttpRequest reset_request = null!;
+            if(httprequest != null &&!httprequest.Equals(request))
+            {
+                if(reset&& request is not null)
+                {
+                    reset_request = request;
+                }
+                request = httprequest;
 
+            }
             MethodInfo Func = null!;
             IMethod method_attribute = null!;
             Dictionary<string,string> Route_values = new Dictionary<string,string>();
@@ -263,38 +274,33 @@ namespace LunaHost.HTTP.Main
                         p_set.Add(request.Body);
                     }
                 }
-
-
-
                 else
                 {
                     p_set.Add(item.DefaultValue!);
                 }
-
             }
             p_set = p_set
-    .Select(item => item is string str ? str.Replace("\u0000", string.Empty) : item)
-    .ToList();
-
+                     .Select(item => item is string str ? str.Replace("\u0000", string.Empty) : item)
+                     .ToList();
+            if (reset)
+                request = reset_request;
             return (HttpResponse)Func.Invoke(this,p_set.ToArray())!;
 
 
 
         }
+        /// <summary>
+        /// Retrieves a segment from the specified starting index in the path, stopping at the next '/' or '?' character.
+        /// </summary>
         public string GetSegmentFromIndex(string path, int startIndex)
         {
             if (startIndex < 0 || startIndex >= path.Length)
             {
                 return string.Empty;
             }
-
-       
             int nextSlashIndex = path.IndexOf('/', startIndex);
             int nextQuestionMarkIndex = path.IndexOf('?', startIndex);
-
-       
             int endIndex = -1;
-
             if (nextSlashIndex != -1 && nextQuestionMarkIndex != -1)
             {
                 endIndex = Math.Min(nextSlashIndex, nextQuestionMarkIndex);
@@ -307,17 +313,15 @@ namespace LunaHost.HTTP.Main
             {
                 endIndex = nextQuestionMarkIndex;
             }
-
-         
             if (endIndex == -1)
             {
                 return path.Substring(startIndex);
             }
-
-           
             return path.Substring(startIndex, endIndex - startIndex);
         }
-
+        /// <summary>
+        /// Retrieves the query string from a URL, if present.
+        /// </summary>
         static string GetQueryString(string input)
         {
             int questionMarkIndex = input.IndexOf('?');
@@ -327,6 +331,12 @@ namespace LunaHost.HTTP.Main
             }
             return string.Empty; 
         }
+        /// <summary>
+        /// Extracts the value associated with a specified parameter name from a URL query string.
+        /// </summary>
+        /// <param name="fullUrl">The full URL containing query parameters.</param>
+        /// <param name="Name">The name of the parameter to find.</param>
+        /// <returns>The value of the specified parameter, or an empty string if the parameter is not found.</returns>
         static string FromUrl(string fullUrl,string Name)
         {
             var b_url = fullUrl.Split("&");
@@ -337,26 +347,29 @@ namespace LunaHost.HTTP.Main
             }
             return "";
         }
-
+        /// <summary>
+        /// Removes the first occurrence of the specified segment from the input string.
+        /// </summary>
+        /// <param name="input">The original string.</param>
+        /// <param name="segment">The segment to remove.</param>
+        /// <returns>The modified string with the first occurrence of the segment removed, or the original string if not found.</returns>
         static string RemoveFirstInstanceOfSegment(string input, string segment)
         {
-
             int index = input.IndexOf(segment);
-
-
             if (index == -1)
             {
                 return input;
             }
-
-
             string before = input.Substring(0, index).TrimEnd('/');
             string after = input.Substring(index + segment.Length).TrimStart('/');
-
             return before.Length > 0 && after.Length > 0 ? $"{before}/{after}" : before + after;
         }
 
-
+        /// <summary>
+        /// Removes everything in the input string after the first question mark (or "/?").
+        /// </summary>
+        /// <param name="input">The string to process. Could be a URL or any string with a query part.</param>
+        /// <returns>The part of the string before the first question mark, or the whole string if no question mark is found.</returns>
         static string RemoveAfterQuestionMark(string input)
         {
             int index = input.IndexOf("/?");

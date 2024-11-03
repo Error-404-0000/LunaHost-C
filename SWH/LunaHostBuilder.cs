@@ -6,120 +6,188 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection.Metadata;
 using System.Text;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using System.Runtime.InteropServices;
+using LunaHost.HTTP.Helper;
 
 namespace LunaHost
 {
-    public class LunaHostBuilder
+    public partial class LunaHostBuilder : IDisposable
     {
-        private List<PageContent> pageContents;
-        public ushort port = 80;
-        public IPAddress IP = IPAddress.Any;
-        public PageContent DefaultPage = null!;
-        public LunaHostBuilder()
+        private readonly List<PageContent> pageContents = new();
+        public ushort Port { get; set; } = 80;
+        public IPAddress IP { get; set; } = IPAddress.Loopback;
+        public PageContent DefaultPage { get; set; } = new ErrorPage();
+        public PageContent Errorpage{  get; set; } = new ErrorPage();
+        public readonly int Capacity;
+        public bool LogRequest { get; set; } = false;
+        public event Action<HttpRequest>? OnRequestReceived;
+        public event Action<HttpRequest, IHttpResponse>? OnResponseSent;
+
+        /// <summary>
+        /// Used primarily for private health checks at /health/{Build_Token}/check
+        /// </summary>
+        /// 
+        public static string Build_Token = Guid.NewGuid().ToString();
+        private bool _disposed = false;
+        private bool Stop { get; set; } = false;
+        private Socket socket;
+
+        public LunaHostBuilder(int Capacity = 10 << 2)
         {
-            pageContents = new List<PageContent>();
             pageContents.Add(new HealthCheckPage());
+            this.Capacity = Capacity;
         }
+
         public void AddPage(PageContent content)
         {
-            if (content == null) 
-                throw new ArgumentNullException("content");
-            pageContents.Add(content); 
+            if (content == null)
+                throw new ArgumentNullException(nameof(content));
+            pageContents.Add(content);
         }
-        public async Task Build()
+
+
+
+        public async Task BuildAsync(bool SkipHealthCheck = false)
         {
-            Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            socket.Bind(new IPEndPoint(IP, port));
-            socket.Listen(200<<5);
-            Console.Write($"SRV -ST\nHost : {IP}\nPort : {port}\nUrl : ");
-            Console.ForegroundColor = ConsoleColor.Blue;
-            Console.Write($"http://{IP} , http://{IP}:{port}");
-            Console.ResetColor();
+            socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            socket.Bind(new IPEndPoint(IP, Port));
+            socket.Listen(Capacity);
 
+            Console.WriteLine($"LunaHost\nHost : {IP}\nPort : {Port}\nUrl : http://{IP}:{Port}\n\n");
 
-            await Task.Run( async() =>
+            var task = Task.Run(async () =>
             {
-                while (true)
+                while (!Stop)
                 {
-                    _ =  HandleRequest(await socket.AcceptAsync());
+                    Socket client = await socket.AcceptAsync();
+                    _ = HandleRequestAsync(client);
                 }
             });
             
-        }
-        public class ErrorPage : PageContent
-        {
-            public ErrorPage() : base("/error")
-            {
+            if (SkipHealthCheck)
+                await task;
+            else {
                 
-            }
-            public  IHttpResponse Get()
-            {
-                return HttpResponse.NotFound("ERROR");
-            }
-        }
-        public async Task HandleRequest(Socket client)
-        {
-            using (client)
-            {
-                
-                byte[] data = new byte[32000];
-                ArraySegment<byte> buffer = new ArraySegment<byte>(data);
-                await client.ReceiveAsync(buffer);
-                string request = string.Join("", data.Take(client.ReceiveBufferSize).Select(x => (char)x));
-                Console.WriteLine(request);
-                HttpRequest httpRequest = new HttpRequest(request);
-                PageContent? PageContent = null!;
-                var response = HttpResponse.NotFound().GetFullResponse();
-                if (httpRequest.Path == "/")
-                {
-                    if (DefaultPage != null)
-                    {
-                        DefaultPage.Match(httpRequest);
-                        PageContent = DefaultPage;
-                    }
-                    else PageContent = new ErrorPage();
-                }
+                if(await HealthCheck())
+                    await task;
                 else
                 {
-                     PageContent = pageContents.FirstOrDefault(x => x.Match(httpRequest));
+                    throw new Exception("Health check failed. Set skiphealthcheck to true to avoid this.");
                 }
-                if (PageContent == null)
-                {
-                    if (DefaultPage != null)
-                    {
-                        DefaultPage.Match(httpRequest);
-                        PageContent = DefaultPage;
-                    }
-                 
-                }
-                if (PageContent != null)
-                {
-                    using (PageContent)
-                    {
-                        response = PageContent.HandleRequest().GetFullResponse();
-                        data = Encoding.UTF8.GetBytes(response);
-                        await client.SendAsync(data);
-
-                    }
-
-                }
-                else
-                {
-                    data = Encoding.UTF8.GetBytes(HttpResponse.NotFound().GetFullResponse());
-                  
-                    await client.SendAsync(data);
-                }
-                
-                client.Shutdown(SocketShutdown.Both);
-                client.Close();
             }
-         
-          
 
         }
+        public async Task<bool> HealthCheck()
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                Console.WriteLine("<<Checking Health Page>>");
+
+                try
+                {
+                    var result = await client.GetAsync($"http://{IP}:{Port}/health/{Build_Token}/check");
+                    if (result.StatusCode == HttpStatusCode.OK)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine("Health Page returned OK 200 " + await result.Content.ReadAsStringAsync());
+                        Console.ResetColor();
+                        return true;
+                    }
+                    else
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine($"Health Check failed with status: {result.StatusCode}");
+                        Console.ResetColor();
+                        return false;
+                    }
+                }
+                catch (HttpRequestException ex)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"Health Check encountered an error: {ex.Message}");
+                    Console.ResetColor();
+                    return false;
+                }
+            }
+        }
+
+        public void StopServer() => Stop = true;
+
+        private async Task HandleRequestAsync(Socket client)
+        {
+            try
+            {
+                using (client)
+                {
+                    byte[] data = new byte[32000];
+                    int bytesReceived = await client.ReceiveAsync(data, SocketFlags.None);
+                    string requestString = Encoding.UTF8.GetString(data, 0, bytesReceived);
+
+                   if(LogRequest)
+                        Console.WriteLine(requestString);
+
+                    HttpRequest httpRequest = new(requestString);
+                    OnRequestReceived?.Invoke(httpRequest);
+
+                    PageContent? pageContent = GetPageContent(httpRequest);
+                    IHttpResponse httpResponse = pageContent != null
+                        ? pageContent.HandleRequest(httpRequest)
+                        : HttpResponse.NotFound();
+
+                    OnResponseSent?.Invoke(httpRequest, httpResponse);
+
+                    string response = httpResponse.GetFullResponse();
+                    byte[] responseData = Encoding.UTF8.GetBytes(response);
+
+                    await client.SendAsync(responseData, SocketFlags.None);
+                    client.Shutdown(SocketShutdown.Both);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error handling request: " + ex.Message);
+            }
+        }
+
+        private PageContent? GetPageContent(HttpRequest httpRequest)
+        {
+            if (httpRequest.Path == "/")
+                return DefaultPage;
+            return pageContents.FirstOrDefault(x => x.Match(httpRequest)) ?? Errorpage;
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed) return;
+
+            if (disposing)
+            {
+                // Dispose managed resources
+                if (socket != null)
+                {
+                    socket.Shutdown(SocketShutdown.Both);
+                    socket.Close();
+                    socket.Dispose();
+                }
+            }
+
+            // Free unmanaged resources if any here
+            _disposed = true;
+        }
+
+        // Finalizer
+        ~LunaHostBuilder()
+        {
+            Dispose(false);
+        }
+
     }
 }
