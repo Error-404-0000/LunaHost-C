@@ -1,4 +1,4 @@
-﻿namespace SWH.HTTP.Interface
+﻿namespace LunaHost.HTTP.Interface
 {
     public enum UrlType
     {

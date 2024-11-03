@@ -1,13 +1,13 @@
-﻿using SWH.Attributes.HttpMethodAttributes;
-using SWH.HTTP.Interface;
-using SWH.MiddleWares;
+﻿using LunaHost.Attributes.HttpMethodAttributes;
+using LunaHost.HTTP.Interface;
+using LunaHost.MiddleWares;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SWH.HTTP.Main
+namespace LunaHost.HTTP.Main
 {
     public class HealthCheckPage: PageContent
     {

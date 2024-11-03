@@ -1,4 +1,4 @@
-﻿using SWH.HTTP.Interface;
+﻿using LunaHost.HTTP.Interface;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace SWH.Attributes.HttpMethodAttributes
+namespace LunaHost.Attributes.HttpMethodAttributes
 {
     public class PutMethodAttribute: Attribute, IMethod
     {

@@ -1,10 +1,10 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using SWH.Attributes;
-using SWH.Attributes.HttpMethodAttributes;
-using SWH.Attributes.MiddleWares;
-using SWH.HTTP.Interface;
-using SWH.Interfaces;
+using LunaHost.Attributes;
+using LunaHost.Attributes.HttpMethodAttributes;
+using LunaHost.Attributes.MiddleWares;
+using LunaHost.HTTP.Interface;
+using LunaHost.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +13,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace SWH.HTTP.Main
+namespace LunaHost.HTTP.Main
 {
 
     public abstract class PageContent : IDisposable

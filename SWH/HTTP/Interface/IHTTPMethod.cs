@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SWH.HTTP.Interface
+namespace LunaHost.HTTP.Interface
 {
     public interface IHTTPMethod
     {

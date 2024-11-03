@@ -1,14 +1,14 @@
-﻿using SWH.Attributes.MiddleWares;
-using SWH.HTTP.Interface;
-using SWH.HTTP.Main;
-using SWH.Interfaces;
+﻿using LunaHost.Attributes.MiddleWares;
+using LunaHost.HTTP.Interface;
+using LunaHost.HTTP.Main;
+using LunaHost.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SWH.MiddleWares
+namespace LunaHost.MiddleWares
 {
     [AsMiddleWare]
     public class AuthorizationAttribute : Attribute, IMiddleWare

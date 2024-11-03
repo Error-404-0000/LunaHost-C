@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace SWH.HTTP.Interface
+namespace LunaHost.HTTP.Interface
 {
     public interface IMethod
     {

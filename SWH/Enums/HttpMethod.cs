@@ -1,4 +1,4 @@
-﻿namespace SWH
+﻿namespace LunaHost
 {
     public partial class HttpRequest
     {

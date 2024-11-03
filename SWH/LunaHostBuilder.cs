@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
-using SWH.HTTP.Interface;
-using SWH.HTTP.Main;
+using LunaHost.HTTP.Interface;
+using LunaHost.HTTP.Main;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,15 +11,15 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace SWH
+namespace LunaHost
 {
-    public class SWHBuilder
+    public class LunaHostBuilder
     {
         private List<PageContent> pageContents;
         public ushort port = 80;
-        public IPAddress IP = IPAddress.Loopback;
+        public IPAddress IP = IPAddress.Any;
         public PageContent DefaultPage = null!;
-        public SWHBuilder()
+        public LunaHostBuilder()
         {
             pageContents = new List<PageContent>();
             pageContents.Add(new HealthCheckPage());

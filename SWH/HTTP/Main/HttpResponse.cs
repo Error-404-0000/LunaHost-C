@@ -1,7 +1,7 @@
 ﻿using System.Text;
-using SWH.HTTP.Interface;
+using LunaHost.HTTP.Interface;
 
-namespace SWH.HTTP.Main
+namespace LunaHost.HTTP.Main
 {
     public class HttpResponse : IHttpResponse
     {

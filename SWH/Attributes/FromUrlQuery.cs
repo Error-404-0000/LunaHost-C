@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SWH.Attributes
+namespace LunaHost.Attributes
 {
     public class FromUrlQuery(string Name =null!):Attribute
     {
