@@ -1,4 +1,5 @@
 ﻿using LunaHost;
+using LunaHost.Attributes;
 using LunaHost.Attributes.HttpMethodAttributes;
 using LunaHost.HTTP.Interface;
 using LunaHost.HTTP.Main;
@@ -25,6 +26,17 @@ namespace LunaHost_Test
                 var re = new HttpResponse()
                 {
                     Body = string.Join(",\n", LoggerAttribute.Loggers),
+                    StatusCode = 200,
+                };
+                re.Headers["Content-Type"] = "application/json";
+                return re;
+            }
+            [GetMethod("/get-page")]
+            public IHttpResponse GetTake([Required,FromUrlQuery("page-number")]int count)
+            {
+                var re = new HttpResponse()
+                {
+                    Body = string.Join(",\n", LoggerAttribute.Loggers.Take(count)),
                     StatusCode = 200,
                 };
                 re.Headers["Content-Type"] = "application/json";

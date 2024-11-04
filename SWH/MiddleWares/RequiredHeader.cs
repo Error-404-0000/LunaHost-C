@@ -20,7 +20,7 @@ namespace LunaHost.MiddleWares
     [AttributeUsage(AttributeTargets.Method)]
     public class RequiredHeaderAttribute(string header) : Attribute, IMiddleWare
     {
-        public Task<IMiddleWareResult<IHttpResponse>> ExcuteAsync(HttpRequest request, Type ClassType)
+        public Task<IMiddleWareResult<IHttpResponse>> ExecuteAsync(HttpRequest request, dynamic? none)
         {
             
             if (!request.Headers.ContainsKey(header))

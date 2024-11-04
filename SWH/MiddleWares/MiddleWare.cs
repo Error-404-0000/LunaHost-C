@@ -17,7 +17,7 @@ namespace LunaHost.MiddleWares
     public abstract class MiddleWare : IMiddleWare
     {
 #pragma warning disable
-        public async Task<IMiddleWareResult<IHttpResponse>> ExcuteAsync(HttpRequest request, Type ClassType)
+        public async Task<IMiddleWareResult<IHttpResponse>> ExecuteAsync(HttpRequest request,dynamic? none)
         {
            return new MiddleWareResult<IHttpResponse>(default(IHttpResponse),true);
         }

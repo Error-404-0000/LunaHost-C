@@ -17,11 +17,11 @@ namespace MiddleWares
     public class LoggerAttribute :Attribute, IMiddleWare
     {
         public static List<string> Loggers = new List<string>();
-        public Task<IMiddleWareResult<IHttpResponse>> ExcuteAsync(HttpRequest request, Type ClassType)
+        public Task<IMiddleWareResult<IHttpResponse>> ExecuteAsync(HttpRequest request, dynamic none)
         {
           //Example
             Loggers.Add($"{{\n\tDate : {DateTime.Now},\n\tMethod : {request.Method},\n\tPath : {request.Path},\n\tUrl : {request.Headers["Host"]+request.Path}\n}}");
-            return Task.FromResult<IMiddleWareResult<IHttpResponse>>( new MiddleWareResult<IHttpResponse>(HttpResponse.OK(), true));
+            return Task.FromResult<IMiddleWareResult<IHttpResponse>>(new MiddleWareResult<IHttpResponse>(HttpResponse.OK(), true));
         }
     }
 }

@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Interfaces;
 using MiddleWares;
+using Attributes;
 
 namespace LunaHost.HTTP.Main
 {
@@ -74,7 +75,7 @@ namespace LunaHost.HTTP.Main
 
             }
 #pragma warning disable
-            var result = InvokeMiddleWareAsync(this.GetType().GetCustomAttributes(true).Where(x => x is IMiddleWare).Cast<IMiddleWare>()).Result;
+            var result = InvokeMiddleWareAsync(this.GetType().GetCustomAttributes(true).Where(x => x is IMiddleWare).Cast<IMiddleWare>(),this).Result;
             if (!result.Success)
                 return result.Response;
 #pragma warning restore
@@ -112,7 +113,7 @@ namespace LunaHost.HTTP.Main
                 // Проверки промежуточного ПО
 #pragma warning disable
                 
-                 var respon =InvokeMiddleWareAsync(method.GetCustomAttributes(true).Where(x => x is IMiddleWare).Cast<IMiddleWare>()).Result;
+                 var respon =InvokeMiddleWareAsync(method.GetCustomAttributes(true).Where(x => x is IMiddleWare).Cast<IMiddleWare>(),method).Result;
                 if(!respon.Success)
                     return respon.Response;
 #pragma warning
@@ -202,8 +203,11 @@ namespace LunaHost.HTTP.Main
                 {
                     paramValue = GetBodyValue(bodyAttr, item, request!);
                 }
-
-                p_set.Add(paramValue??item.DefaultValue);
+               
+                 result = InvokeMiddleWareAsync(item.GetCustomAttributes(true).Where(x => x is IMiddleWare).Cast<IMiddleWare>(), paramValue).Result;
+                if (!result.Success)
+                    return result.Response;
+                p_set.Add(paramValue??default(object));
             }
             p_set = p_set
                      .Select(item => item is string str ? str.Replace("\u0000", string.Empty) : item)
@@ -216,15 +220,60 @@ namespace LunaHost.HTTP.Main
 
         }
 
-        public async Task<IMiddleWareResult<IHttpResponse>> InvokeMiddleWareAsync(IEnumerable<IMiddleWare> MiddleWares)
+        public async Task<IMiddleWareResult<IHttpResponse>> InvokeMiddleWareAsync(IEnumerable<IMiddleWare> MiddleWares,object from)
         {
             if (MiddleWares is null)
                 goto ret;
-
+            dynamic prefer_v = null;
             foreach (var MiddleWare in MiddleWares)
             {
-                if(await MiddleWare.ExcuteAsync(request!,this.GetType()) is IMiddleWareResult<IHttpResponse> mid_re && !mid_re.Success)
+                
+                if (from is not null && from.GetType().GetCustomAttribute<NoPreferences>() is not null)
+                    goto call;
+                switch (MiddleWare.GetType().GetCustomAttribute<NoPreferences>())
+                {
+                    case null:
+                        goto preferences_check;
+                    default:
+                        goto call;
+                }
+
+                preferences_check:
+                switch (MiddleWare.GetType().GetMethod(nameof(MiddleWare.ExecuteAsync)).GetCustomAttribute<NoPreferences>())
+                {
+                    case null:
+                        var pref = (MiddleWare.GetType().GetMethod("ExecuteAsync").GetParameters().
+                            Where(x => x.GetCustomAttributes<ObjectPrefer>().Any())?.FirstOrDefault()?.GetCustomAttribute<ObjectPrefer>() as ObjectPrefer);
+                        if (pref is null)
+                            goto call;
+                        switch (pref.preferred)
+                        {
+                            case Enums.Preferred.None:
+                                goto call;
+                            case Enums.Preferred.Method:
+                                prefer_v = from is MethodInfo ? from : throw new Exception($"{from.GetType()} does not match the Preferred Value.");
+                            break;
+                            case Enums.Preferred.Property:
+                                 prefer_v = from is PropertyInfo ? from : throw new Exception($"{from.GetType()} does not match the Preferred Value.");
+                                break;
+                            case Enums.Preferred.Parameter:
+                                prefer_v = from is ParameterInfo ? from : throw new Exception($"{from.GetType()} does not match the Preferred Value.");
+                                break;
+                          
+                            //any preferred / Value
+                            default:
+                                prefer_v = from;
+                            break;
+                        }
+                        goto call;
+                    break;
+                }
+             call:
+                if(await MiddleWare.ExecuteAsync(request!,prefer_v) is IMiddleWareResult<IHttpResponse> mid_re && !mid_re.Success)
                     return mid_re;
+
+                ctr:
+                continue;
             }
             ret:
             return new MiddleWareResult<IHttpResponse>(HttpResponse.OK(), true);
@@ -307,12 +356,18 @@ namespace LunaHost.HTTP.Main
         }
         object? ConvertToType(object? value, Type targetType)
         {
-            if (value == DBNull.Value)
+            if (value == DBNull.Value || value is string s && s is "")
             {
                 return null; 
             }
-
-            return Convert.ChangeType(value, targetType);
+            try
+            {
+                return Convert.ChangeType(value, targetType);
+            }
+            catch
+            {
+                return null;
+            }
         }
        
         /// <summary>

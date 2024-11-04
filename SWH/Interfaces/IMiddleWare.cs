@@ -1,4 +1,6 @@
-﻿using Interfaces;
+﻿using Attributes;
+using Enums;
+using Interfaces;
 using LunaHost.HTTP.Interface;
 using System;
 using System.Collections.Generic;
@@ -15,11 +17,11 @@ namespace LunaHost.Interfaces
     public interface IMiddleWare
     {
         /// <summary>
-        /// All IMiddleWare must have ExcuteAsync mothod.
+        /// All IMiddleWare must have ExecuteAsync Method.
         /// </summary>
         /// <param name="method">determines if the code should break or continue</param>
         /// <returns></returns>
         
-        Task<IMiddleWareResult<IHttpResponse>> ExcuteAsync(HttpRequest request,Type ClassType);
+        Task<IMiddleWareResult<IHttpResponse>> ExecuteAsync(HttpRequest request,[ObjectPrefer(Preferred.None)]dynamic? obj);
     }
 }
