@@ -1,19 +1,23 @@
-﻿using LunaHost.Attributes.HttpMethodAttributes;
+﻿using LunaHost.Attributes;
+using LunaHost.Attributes.HttpMethodAttributes;
 using LunaHost.HTTP.Interface;
 using LunaHost.HTTP.Main;
+using MiddleWares;
 
 namespace LunaHost
 {
     public partial class LunaHostBuilder
     {
+        [Logger] 
         public class ErrorPage : PageContent
         {
             public ErrorPage() : base("/") { }
 
             [GetMethod("/{any}")]
-            public override IHttpResponse Get()
+            [Logger]
+            public  IHttpResponse Get([FromRoute("any")]string invalid_url)
             {
-                return HttpResponse.NotFound("ERROR: Page not found.");
+                return HttpResponse.NotFound($"Page not found : {invalid_url}. ");
             }
         }
 

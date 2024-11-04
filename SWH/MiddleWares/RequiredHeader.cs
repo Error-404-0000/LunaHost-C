@@ -1,7 +1,9 @@
-﻿using LunaHost.Attributes.MiddleWares;
+﻿using Interfaces;
+using LunaHost.Attributes.MiddleWares;
 using LunaHost.HTTP.Interface;
 using LunaHost.HTTP.Main;
 using LunaHost.Interfaces;
+using MiddleWares;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,16 +17,17 @@ namespace LunaHost.MiddleWares
     /// </summary>
     ///
     [AsMiddleWare]
+    [AttributeUsage(AttributeTargets.Method)]
     public class RequiredHeaderAttribute(string header) : Attribute, IMiddleWare
     {
-        public Task<(bool successful, IHttpResponse if_failed)> ExcuteAsync(HttpRequest request, Type ClassType)
+        public Task<IMiddleWareResult<IHttpResponse>> ExcuteAsync(HttpRequest request, Type ClassType)
         {
             
             if (!request.Headers.ContainsKey(header))
-                return Task.FromResult<(bool sucessfull, IHttpResponse if_failed)>((false, HttpResponse.BadRequest()));
+                return Task.FromResult<IMiddleWareResult<IHttpResponse>>(new MiddleWareResult<IHttpResponse>(HttpResponse.BadRequest(), false));
             else
             {
-                return Task.FromResult<(bool sucessfull, IHttpResponse if_failed)>((true, HttpResponse.OK()));
+                return Task.FromResult<IMiddleWareResult<IHttpResponse>>(new MiddleWareResult<IHttpResponse>(HttpResponse.OK(),true));
             }
 
         }

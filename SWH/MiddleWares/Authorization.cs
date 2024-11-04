@@ -1,7 +1,9 @@
-﻿using LunaHost.Attributes.MiddleWares;
+﻿using Interfaces;
+using LunaHost.Attributes.MiddleWares;
 using LunaHost.HTTP.Interface;
 using LunaHost.HTTP.Main;
 using LunaHost.Interfaces;
+using MiddleWares;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,16 +13,17 @@ using System.Threading.Tasks;
 namespace LunaHost.MiddleWares
 {
     [AsMiddleWare]
+    [AttributeUsage(AttributeTargets.Method)]
     public class AuthorizationAttribute : Attribute, IMiddleWare
     {
-        public Task<(bool successful, IHttpResponse if_failed)> ExcuteAsync(HttpRequest request, Type ClassType)
+       
+        public Task<IMiddleWareResult<IHttpResponse>> ExcuteAsync(HttpRequest request, Type ClassType)
         {
             if (!request.Headers.ContainsKey("Authorization"))
             {
-                return Task.FromResult< (bool successful, IHttpResponse if_failed)>((false,HttpResponse.Unauthorized()));
-               
+                return Task.FromResult<IMiddleWareResult<IHttpResponse>>(new MiddleWareResult<IHttpResponse>(HttpResponse.Unauthorized(),false));
             }
-            return Task.FromResult<(bool successful, IHttpResponse if_failed)>((true, HttpResponse.OK()));
+                return Task.FromResult<IMiddleWareResult<IHttpResponse>>(new MiddleWareResult<IHttpResponse>(HttpResponse.OK(),false));
         }
     }
 }

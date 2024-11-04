@@ -40,7 +40,7 @@ namespace LunaHost
             this.Capacity = Capacity;
         }
 
-        public void AddPage(PageContent content)
+        public void Add(PageContent content)
         {
             if (content == null)
                 throw new ArgumentNullException(nameof(content));

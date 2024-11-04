@@ -1,4 +1,5 @@
-﻿using LunaHost.HTTP.Interface;
+﻿using Interfaces;
+using LunaHost.HTTP.Interface;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,6 @@ namespace LunaHost.Interfaces
         /// <param name="method">determines if the code should break or continue</param>
         /// <returns></returns>
         
-        Task<(bool successful, IHttpResponse if_failed)> ExcuteAsync(HttpRequest request,Type ClassType);
+        Task<IMiddleWareResult<IHttpResponse>> ExcuteAsync(HttpRequest request,Type ClassType);
     }
 }

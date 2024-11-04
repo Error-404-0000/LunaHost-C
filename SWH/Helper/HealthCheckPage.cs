@@ -3,10 +3,12 @@ using LunaHost.Attributes.HttpMethodAttributes;
 using LunaHost.HTTP.Interface;
 using LunaHost.HTTP.Main;
 using LunaHost.MiddleWares;
+using MiddleWares;
 
 
 namespace LunaHost.HTTP.Helper
 {
+    [Logger]
     public class HealthCheckPage : PageContent
     {
         public HealthCheckPage() : base("/health")

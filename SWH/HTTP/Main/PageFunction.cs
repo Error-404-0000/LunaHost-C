@@ -12,10 +12,12 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Interfaces;
+using MiddleWares;
 
 namespace LunaHost.HTTP.Main
 {
-
+  
     public abstract class PageContent : IDisposable
     {
         protected HttpRequest? request;
@@ -25,7 +27,7 @@ namespace LunaHost.HTTP.Main
         protected PageContent(string Path)
         {
             if (Path == null) throw new ArgumentNullException("path");
-            if (!Path.StartsWith("/")) throw new ArgumentException("path must start with '/'.");
+            if (!Path.StartsWith("/")) throw new ArgumentException("Path(s) must start with '/'.");
             this.Path = Path;
 
         }
@@ -71,13 +73,18 @@ namespace LunaHost.HTTP.Main
                 request = httprequest;
 
             }
+#pragma warning disable
+            var result = InvokeMiddleWareAsync(this.GetType().GetCustomAttributes(true).Where(x => x is IMiddleWare).Cast<IMiddleWare>()).Result;
+            if (!result.Success)
+                return result.Response;
+#pragma warning restore
             MethodInfo Func = null!;
             IMethod method_attribute = null!;
             Dictionary<string,string> Route_values = new Dictionary<string,string>();
             foreach (var method in this.GetType().GetMethods().Where(x => x.ReturnType == typeof(IHttpResponse)))
             {
                 method_attribute = null!;
-                if (request.Method == HttpRequest.HttpMethod.GET)
+                if (request!.Method == HttpRequest.HttpMethod.GET)
                 {
                     method_attribute = method.GetCustomAttribute<GetMethodAttribute>(true)!;
                 }
@@ -103,15 +110,13 @@ namespace LunaHost.HTTP.Main
                 }
                 var m = method.GetCustomAttributes(true);
                 // Проверки промежуточного ПО
-                foreach (IMiddleWare Middleware in method.GetCustomAttributes(true).Where(x => x is IMiddleWare))
-                {
-                    var result = Middleware.ExcuteAsync(request, this.GetType()).Result;
-                    if (result.successful)
-                        continue;
-                    return result.if_failed;
-                }
+#pragma warning disable
+                
+                 var respon =InvokeMiddleWareAsync(method.GetCustomAttributes(true).Where(x => x is IMiddleWare).Cast<IMiddleWare>()).Result;
+                if(!respon.Success)
+                    return respon.Response;
+#pragma warning
 
-            
                 if (method_attribute.ContainsStaticValue)
                 {
                     Dictionary<string, string> replacements = new Dictionary<string, string>();
@@ -179,105 +184,26 @@ namespace LunaHost.HTTP.Main
             var p_set = new List<object>() ;
             foreach (var item in Func.GetParameters())
             {
-                if (item.GetCustomAttribute<FromRoute>(true) is FromRoute FR)
-                {
-                    if (FR.IsSet)
-                    {
-                        if (Route_values.TryGetValue(FR.Name ?? "", out string? routeValue))
-                        {
-                            p_set.Add(routeValue);
-                        }
-                        else
-                        {
-                            p_set.Add(item.DefaultValue ?? null!);
-                        }
-                    }
-                    else
-                    {
-                        if (Route_values.TryGetValue(item.Name ?? "", out string? result))
-                        {
-                            p_set.Add(result);
-                        }
-                        else
-                        {
-                            p_set.Add(item.DefaultValue ?? null!);
-                        }
-                    }
-                }
-                else if (item.GetCustomAttribute<FromUrlQuery>(true) is FromUrlQuery FU)
-                {
-                    if (FU.IsSet)
-                        p_set.Add(Uri.UnescapeDataString(FromUrl(GetQueryString(request.Path), FU.Name)));
-                    else 
-                    {
-                        p_set.Add(Uri.UnescapeDataString(FromUrl(GetQueryString(request.Path),item.Name??"")));
-                    }
-                }
-               
-                else if (item.GetCustomAttribute<FromHeader>(true) is FromHeader FH)
-                {
-                    if (FH.IsSet)
-                    {
-                        if (request.Headers.TryGetValue(FH.Name ?? "", out string? headerValue))
-                        {
-                            p_set.Add(headerValue);
-                        }
-                        else
-                        {
-                            p_set.Add(item.DefaultValue ?? null!);
-                        }
-                    }
-                    else
-                    {
-                        if (request.Headers.TryGetValue(item.Name ?? "", out string? result))
-                        {
-                            p_set.Add(result);
-                        }
-                        else
-                        {
-                            p_set.Add(item.DefaultValue!);
-                        }
-                    }
+                object? paramValue = item.DefaultValue;
 
-                }
-                else if (item.GetCustomAttribute<FromBody>(true) is FromBody FB)
+                if (item.GetCustomAttribute<FromRoute>(true) is FromRoute routeAttr)
                 {
-                    try
-                    {
-                        JObject jsonObj = JObject.Parse(request.Body);
+                    paramValue = GetRouteValue(Route_values,routeAttr, item);
+                }
+                else if (item.GetCustomAttribute<FromUrlQuery>(true) is FromUrlQuery queryAttr)
+                {
+                    paramValue = GetQueryValue(queryAttr, item);
+                }
+                else if (item.GetCustomAttribute<FromHeader>(true) is FromHeader headerAttr)
+                {
+                    paramValue = GetHeaderValue(headerAttr, item);
+                }
+                else if (item.GetCustomAttribute<FromBody>(true) is FromBody bodyAttr)
+                {
+                    paramValue = GetBodyValue(bodyAttr, item, request!);
+                }
 
-                      
-                        if (FB.IsSet && !string.IsNullOrEmpty(FB.Name))
-                        {
-                            if (jsonObj.ContainsKey(FB.Name))
-                            {
-                             
-                                var value = jsonObj[FB.Name]!.ToObject(item.ParameterType);
-                                p_set.Add(value ?? item.DefaultValue ?? null!);
-                            }
-                            else
-                            {
-                               
-                                p_set.Add(item.DefaultValue ?? null!);
-                            }
-                        }
-                        else
-                        {
-                          
-                            var deserializedValue = JsonConvert.DeserializeObject(request.Body, item.ParameterType);
-                            p_set.Add(deserializedValue ?? request.Body ?? null!);
-                        }
-                    }
-                    catch
-                    {
-                     
-                        p_set.Add(request.Body);
-                    }
-                }
-                else
-                {
-                    p_set.Add(item.DefaultValue!);
-                }
+                p_set.Add(paramValue??item.DefaultValue);
             }
             p_set = p_set
                      .Select(item => item is string str ? str.Replace("\u0000", string.Empty) : item)
@@ -289,6 +215,106 @@ namespace LunaHost.HTTP.Main
 
 
         }
+
+        public async Task<IMiddleWareResult<IHttpResponse>> InvokeMiddleWareAsync(IEnumerable<IMiddleWare> MiddleWares)
+        {
+            if (MiddleWares is null)
+                goto ret;
+
+            foreach (var MiddleWare in MiddleWares)
+            {
+                if(await MiddleWare.ExcuteAsync(request!,this.GetType()) is IMiddleWareResult<IHttpResponse> mid_re && !mid_re.Success)
+                    return mid_re;
+            }
+            ret:
+            return new MiddleWareResult<IHttpResponse>(HttpResponse.OK(), true);
+        }
+
+        /// <summary>
+        /// Get the value from route
+        /// </summary>
+        /// <param name="Route_values"></param>
+        /// <param name="routeAttr"></param>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        object? GetRouteValue(Dictionary<string,string> Route_values, FromRoute routeAttr, ParameterInfo item)
+        {
+            if (routeAttr.IsSet && Route_values.TryGetValue(routeAttr.Name, out string? routeValue))
+            {
+                return ConvertToType(routeValue, item.ParameterType);
+            }
+            else if (!routeAttr.IsSet && Route_values.TryGetValue(item.Name, out string? rV))
+            {
+                return ConvertToType(rV, item.ParameterType);
+
+            }
+
+            return item.DefaultValue;
+        }
+
+        /// <summary>
+        /// Get the value from a UrlQuery
+        /// </summary>
+        /// <param name="queryAttr"></param>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        object? GetQueryValue(FromUrlQuery queryAttr, ParameterInfo item)
+        {
+            var queryString = Uri.UnescapeDataString(FromUrl(GetQueryString(request.Path), queryAttr.Name ?? item.Name ?? ""));
+            return ConvertToType(queryString, item.ParameterType);
+        }
+        // Helper method for FromHeader
+        object? GetHeaderValue(FromHeader headerAttr, ParameterInfo item)
+        {
+            if (headerAttr.IsSet&& request.Headers.TryGetValue(headerAttr.Name , out var headerValue))
+            {
+                return ConvertToType(headerValue, item.ParameterType);
+            }
+            else if ( request.Headers.TryGetValue(item.Name, out var HV))
+            {
+                return ConvertToType(HV, item.ParameterType);
+            }
+            return item.DefaultValue;
+        }
+
+        /// <summary>
+        /// Convert the Body to a C# item
+        /// </summary>
+        /// <param name="bodyAttr"></param>
+        /// <param name="item"></param>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        object? GetBodyValue(FromBody bodyAttr, ParameterInfo item, HttpRequest request)
+        {
+            try
+            {
+                JObject jsonObj = JObject.Parse(request.Body);
+
+                if (bodyAttr.IsSet && jsonObj.ContainsKey(bodyAttr.Name))
+                {
+                    return jsonObj[bodyAttr.Name]!.ToObject(item.ParameterType);
+                }
+                else if (!bodyAttr.IsSet && jsonObj.ContainsKey(item.Name))
+                {
+                    return jsonObj[item.Name]!.ToObject(item.ParameterType);
+                }
+                return JsonConvert.DeserializeObject(request.Body, item.ParameterType) ?? request.Body;
+            }
+            catch
+            {
+                return request.Body;
+            }
+        }
+        object? ConvertToType(object? value, Type targetType)
+        {
+            if (value == DBNull.Value)
+            {
+                return null; 
+            }
+
+            return Convert.ChangeType(value, targetType);
+        }
+       
         /// <summary>
         /// Retrieves a segment from the specified starting index in the path, stopping at the next '/' or '?' character.
         /// </summary>
@@ -331,6 +357,8 @@ namespace LunaHost.HTTP.Main
             }
             return string.Empty; 
         }
+
+       
         /// <summary>
         /// Extracts the value associated with a specified parameter name from a URL query string.
         /// </summary>
