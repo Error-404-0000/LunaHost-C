@@ -1,4 +1,5 @@
-﻿using HTTP.Interface;
+﻿using Attributes;
+using HTTP.Interface;
 using LunaHost.Attributes;
 using LunaHost.Attributes.HttpMethodAttributes;
 using LunaHost.HTTP.Interface;
@@ -13,6 +14,7 @@ using System.Threading.Tasks;
 
 namespace Swegger
 {
+    [NoPreferences]
     public sealed class SwaggerContent : PageContent
     {
         private readonly IEnumerable<PageContent> _pages;
@@ -47,49 +49,13 @@ namespace Swegger
 
             foreach (var page in _pages)
             {
-                var methods = page.GetType().GetMethods();
-
-                foreach (var method in methods)
-                {
-                    var httpMethodAttribute = method.GetCustomAttributes()
-                        .OfType<IMethod>()
-                        .FirstOrDefault();
-
-                    if (httpMethodAttribute != null)
-                    {
-                        string path = httpMethodAttribute.Path; 
-                        string httpMethod = httpMethodAttribute.GetType().Name.Replace("MethodAttribute", "").ToLower();
-
-                        // Prepare parameters
-                        var parameters = method.GetParameters()
-                            .Select(param => new
-                            {
-                                tags = method.Name is string s && s.EndsWith("Content") && s.Length>7?CapitalizeFirstLetter(s.Remove(s.Length - 7)) : CapitalizeFirstLetter(method.Name),
-                                name = param.Name,
-                                @in = DetermineParameterLocation(param),
-                                required = IsParameterRequired(param),
-                                schema = new { type = GetSwaggerType(param.ParameterType) }
-                            }).ToList();
-
-                        // Add to OpenAPI path
-                        if (!paths.ContainsKey(path))
-                        {
-                            paths[path] = new Dictionary<string, object>();
-                        }
-
-                        var pathMethods = (Dictionary<string, object>)paths[path];
-                        pathMethods[httpMethod] = new
-                        {
-                            summary = $"Endpoint for {method.Name}",
-                            parameters,
-                            responses = new Dictionary<string, object>
-                            {
-                                { "200", new { description = "Successful response" } },
-                                { "400", new { description = "Bad Request" } }
-                            }
-                        };
-                    }
-                }
+                paths.Add(
+                     page.Path,
+                      (
+                       tags: page.GetType().Name,
+                       path:page.Path
+                      )
+                    );
             }
 
             var openApiSpec = new

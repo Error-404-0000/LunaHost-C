@@ -23,7 +23,7 @@ namespace LunaHost.HTTP.Main
     {
         protected HttpRequest? request;
      
-        private string Path { get; }
+        public string Path { get; }
 
         protected PageContent(string Path)
         {
