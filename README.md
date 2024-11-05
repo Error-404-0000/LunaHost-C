@@ -5,25 +5,25 @@ Hey there! Welcome to **LunaHost**—your super lightweight and powerful custom 
 ## 🌸 Features You’ll Love:
 
 ### 💕 Attribute-Based Routing & Parameter Magic
-LunaHost lets you define your routes easily using attributes! This makes setting up RESTful endpoints as simple as possible:
+LunaHost lets you define your routes easily using attributes This makes setting up RESTful endpoints as simple as possible:
    - **HTTP Method Tags**: Define your endpoints like this: `[GetMethod]`, `[PostMethod]`, `[PutMethod]`, `[DeleteMethod]`.
    - **Parameter Magic**:
       - **`[FromRoute]`**: Grab a value from your URL.
       - **`[FromQuery]`**: Pick a value straight from the query string.
       - **`[FromHeader]`**: Snag a value from headers for some extra logic.
-      - **`[FromBody]`**: Automatically turn that JSON request body into a usable object. How easy is that?!
+      - **`[FromBody]`**: Automatically turn that JSON request body into a usable object.
 
 ### 🛠️ Middleware with Personalized Flair
-LunaHost’s middleware system is super customizable!
-   - **`ObjectPrefer` Attribute with `Preferred` Enum**: It lets middleware know exactly which parameters to handle. You can target values directly!
+LunaHost’s middleware system is super customizable
+   - **`ObjectPrefer` Attribute with `Preferred` Enum**: It lets middleware know exactly which parameters to handle. You can target values directly
    - **`NoPreferences` Attribute**: Skip those unnecessary checks for routes that don’t need it—saving time.
-   - **Dynamic Validation**: Middleware can check things like length, pattern, and whether the parameter is empty. Luna keeps everything organized and clean!
+   - **Dynamic Validation**: Middleware can check things like length, pattern, and whether the parameter is empty. Luna keeps everything organized and clean
 
 ### 🌟 Fancy Validation with `Required`
 Want to make sure your parameters are *just right*? Use the `Required` attribute to set rules:
    - **Length Limits**: Set minimum and maximum length.
    - **Regex Checks**: Match those strings to make sure they look exactly as you want.
-   - **Not Null/Empty**: No empty names allowed here!
+   - **Not Null/Empty**: No empty names allowed here
 
 Example:
 ```csharp
@@ -36,8 +36,8 @@ public IHttpResponse GetUser([Required(3, 20, "Invalid username", new Regex("^[a
 
 ### 📋 Swagger UI for Interactive Fun
 Check out your APIs in a super fun and interactive way:
-- Auto-Generated Docs: See all your routes turn into a pretty Swagger page!
-- **Interactive Testing**: Yup, test right from your browser!
+- Auto-Generated Docs: See all your routes turn into a pretty Swagger page
+- **Interactive Testing**: Yup, test right from your browser
 - **Full Details**: All headers, query strings, and body details—totally documented.
 
 ### 📈 Real-Time Logging and Monitoring
@@ -126,3 +126,4 @@ public class PublicEndpoints : PageContent
 - **Rate Limiting**: Keep the spammers out.
 - **Role-Based Restrictions**: Keep it secure.
 - **Caching**: Quick responses, always.
+- **And IDKKK**: .....
