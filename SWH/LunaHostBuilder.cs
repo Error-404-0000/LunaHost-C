@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 using LunaHost.HTTP.Helper;
+using Swegger;
 
 namespace LunaHost
 {
@@ -21,6 +22,23 @@ namespace LunaHost
         public PageContent DefaultPage { get; set; } = new ErrorPage();
         public PageContent Errorpage{  get; set; } = new ErrorPage();
         public readonly int Capacity;
+        bool _useswagger = false;
+        public bool UseSwagger
+        {
+            get => _useswagger;
+            set {
+                _useswagger = value;
+                
+                if(!pageContents.Any(x=>x is SwaggerContent))
+                {
+                    this.Add(new SwaggerContent(this.pageContents));
+                }
+                if(!pageContents.Any(y=>y is SwaggerUIContent))
+                {
+                    this.Add(new SwaggerUIContent("C:\\Users\\Demon\\source\\repos\\webHosting\\SWH\\Swegger\\dist\\"));
+                }
+            }
+        }
         public bool LogRequest { get; set; } = false;
         public event Action<HttpRequest>? OnRequestReceived;
         public event Action<HttpRequest, IHttpResponse>? OnResponseSent;

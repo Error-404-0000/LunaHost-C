@@ -4,14 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LunaHost.Attributes
+namespace HTTP.Interface
 {
-    public class FromBody(string Name = null!) : Attribute 
+    public interface IHTTPParameter
     {
-        public string Name = Name;
-        public bool IsSet
+        string Name { get;  }
+        bool IsSet
         {
-           
             get => Name != null;
         }
     }

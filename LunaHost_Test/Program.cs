@@ -4,6 +4,8 @@ using LunaHost.Attributes.HttpMethodAttributes;
 using LunaHost.HTTP.Interface;
 using LunaHost.HTTP.Main;
 using MiddleWares;
+using System.Net;
+using System.Text.RegularExpressions;
 namespace LunaHost_Test
 {
     internal class Program
@@ -12,10 +14,23 @@ namespace LunaHost_Test
         {
             using (LunaHostBuilder Builder = new LunaHostBuilder())
             {
+                Builder.IP = IPAddress.Parse("10.0.0.71");
                 Builder.Add(new Logger());
+                Builder.Add(new AccountContent());
+                Builder.UseSwagger = true;
                 Builder.BuildAsync().Wait();
             }
         }
+        public class AccountContent : PageContent
+        {
+            [PostMethod("/register")]
+            public IHttpResponse Register([Required(5, 15, "Username is required",regex: "^[a-zA-Z0-9]*$"),FromBody] string username,[FromBody,Required]int id)
+            {
+                // Only called if the Required middleware validation passes
+                return HttpResponse.OK("Registration successful");
+            }
+        }
+
         public class Logger : PageContent
         {
             public Logger() : base("/logs")

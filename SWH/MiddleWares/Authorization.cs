@@ -18,7 +18,8 @@ namespace LunaHost.MiddleWares
     [AttributeUsage(AttributeTargets.Method)]
     public class AuthorizationAttribute : Attribute, IMiddleWare
     {
-       
+     
+
         public Task<IMiddleWareResult<IHttpResponse>> ExecuteAsync(HttpRequest request,dynamic? none)
         {
             if (!request.Headers.ContainsKey("Authorization"))

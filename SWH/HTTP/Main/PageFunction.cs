@@ -22,8 +22,8 @@ namespace LunaHost.HTTP.Main
     public abstract class PageContent : IDisposable
     {
         protected HttpRequest? request;
-        const string _path = "";
-        private string Path { get; set; }
+     
+        private string Path { get; }
 
         protected PageContent(string Path)
         {
@@ -34,6 +34,11 @@ namespace LunaHost.HTTP.Main
         }
         public PageContent()
         {
+            if (this.GetType().Name is string s && s.EndsWith("Content") && s.Length>7)
+            {
+                this.Path="/"+ s.Remove(s.Length-7).ToLower();
+                return;
+            }
             this.Path = "/"+this.GetType().Name.ToLower();
         }
       
@@ -309,7 +314,12 @@ namespace LunaHost.HTTP.Main
         /// <returns></returns>
         object? GetQueryValue(FromUrlQuery queryAttr, ParameterInfo item)
         {
-            var queryString = Uri.UnescapeDataString(FromUrl(GetQueryString(request.Path), queryAttr.Name ?? item.Name ?? ""));
+            string queryString = null;
+            if (queryAttr.IsSet)
+                 queryString = Uri.UnescapeDataString(FromUrl(GetQueryString(request.Path), queryAttr.Name));
+            else
+                queryString = Uri.UnescapeDataString(FromUrl(GetQueryString(request.Path), item.Name));
+
             return ConvertToType(queryString, item.ParameterType);
         }
         // Helper method for FromHeader
