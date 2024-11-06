@@ -69,7 +69,7 @@ namespace LunaHost
 
             if (!pageContents.Any(y => y is SwaggerUIContent))
             {
-                this.Add(new SwaggerUIContent(".\\Swegger\\dist\\"));
+                this.Add(new SwaggerUIContent("C:\\Users\\Demon\\source\\repos\\webHosting\\SWH\\Swegger\\dist\\"));
             }
         }
 
