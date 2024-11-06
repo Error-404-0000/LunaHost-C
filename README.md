@@ -62,7 +62,6 @@ Create complex and dynamic routes like `/user/{username}/profile/{section}` for 
 │   ├── MiddleWares                       # Custom middleware to keep things functional.
 │   ├── Swagger                           # All Swagger and OpenAPI magic.
 ├── LunaHostBuilder.cs                    # Builds the server. Simple!
-├── Program.cs                            # Starts everything up.
 └── README.md                             # You’re here! !
 ```
 
