@@ -9,7 +9,7 @@ namespace LunaHost.Attributes
 {
     public class FromHeader : Attribute,IHTTPParameter
     {
-        public string Name {  get; set; }  
+        public string Name {  get; }  
         public bool IsSet {  get; set; }
         public FromHeader()
         {

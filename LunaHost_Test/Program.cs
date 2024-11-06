@@ -14,7 +14,8 @@ namespace LunaHost_Test
         {
             using (LunaHostBuilder Builder = new LunaHostBuilder())
             {
-                Builder.IP = IPAddress.Parse("10.0.0.71");
+                //returns full error
+                Builder.InDebugMode = true;
                 Builder.Add(new Logger());
                 Builder.Add(new AccountContent());
                 Builder.UseSwagger = true;
@@ -24,10 +25,11 @@ namespace LunaHost_Test
         public class AccountContent : PageContent
         {
             [PostMethod("/register")]
-            public IHttpResponse Register([Required(5, 15, "Username is required",regex: "^[a-zA-Z0-9]*$"),FromBody] string username,[FromBody,Required]int id)
+            public IHttpResponse Register([Required(5, 15, "Username is required",regex: "^[a-zA-Z0-9]*$"),FromBody] string username,[FromBody,Required]int id, [FromBody("bod")]HttpResponse r)
             {
+
                 // Only called if the Required middleware validation passes
-                return HttpResponse.OK("Registration successful");
+                return HttpResponse.OK(r.ToString());
             }
         }
 

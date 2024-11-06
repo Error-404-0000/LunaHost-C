@@ -20,25 +20,59 @@ namespace LunaHost
         public ushort Port { get; set; } = 80;
         public IPAddress IP { get; set; } = IPAddress.Loopback;
         public PageContent DefaultPage { get; set; } = new ErrorPage();
-        public PageContent Errorpage{  get; set; } = new ErrorPage();
+        public PageContent Errorpage { get; set; } = new ErrorPage();
         public readonly int Capacity;
-        bool _useswagger = false;
+        private bool _useSwagger = false;
+        private string swagger_version = "2.0";
+        public List<SwaggerContent.Server> Servers { get; set; }
+        private SwaggerContent.OpenApiSpec openApiSpec { get; set; }
+        public string Openapi { get; set; } = "3.0.0";
+        public bool InDebugMode { get; set; }
         public bool UseSwagger
         {
-            get => _useswagger;
-            set {
-                _useswagger = value;
-                
-                if(!pageContents.Any(x=>x is SwaggerContent))
-                {
-                    this.Add(new SwaggerContent(this.pageContents));
-                }
-                if(!pageContents.Any(y=>y is SwaggerUIContent))
-                {
-                    this.Add(new SwaggerUIContent(".\\Swegger\\dist\\"));
-                }
+            get => _useSwagger;
+            set
+            {
+                _useSwagger = value;
+                ConfigureSwaggerContent();
             }
         }
+
+        public void ConfigureSwaggerContent()
+        {
+            if (openApiSpec is null)
+            {
+                openApiSpec = new SwaggerContent.OpenApiSpec
+                (
+                    info: new SwaggerContent.Info
+                    (
+                        title: nameof(SwaggerUIContent),
+                        version: Openapi ?? "3.0.0",
+                        description: "LunaHost HTTP."
+                    ),
+                    servers: new()
+                    {
+                         new SwaggerContent.Server(
+                                     url: $"http://{IP}:{Port}",
+                                     description: nameof(SwaggerUIContent)
+                         )
+                    },
+                    swagger_version: swagger_version
+
+                );
+            }
+
+            if (!pageContents.Any(x => x is SwaggerContent))
+            {
+                this.Add(new SwaggerContent(pageContents, openApiSpec, Openapi));
+            }
+
+            if (!pageContents.Any(y => y is SwaggerUIContent))
+            {
+                this.Add(new SwaggerUIContent(".\\Swegger\\dist\\"));
+            }
+        }
+
         public bool LogRequest { get; set; } = false;
         public event Action<HttpRequest>? OnRequestReceived;
         public event Action<HttpRequest, IHttpResponse>? OnResponseSent;
@@ -56,6 +90,7 @@ namespace LunaHost
         {
             pageContents.Add(new HealthCheckPage());
             this.Capacity = Capacity;
+
         }
 
         public void Add(PageContent content)
@@ -83,12 +118,13 @@ namespace LunaHost
                     _ = HandleRequestAsync(client);
                 }
             });
-            
+
             if (SkipHealthCheck)
                 await task;
-            else {
-                
-                if(await HealthCheck())
+            else
+            {
+
+                if (await HealthCheck())
                     await task;
                 else
                 {
@@ -132,7 +168,28 @@ namespace LunaHost
         }
 
         public void StopServer() => Stop = true;
+        public delegate IHttpResponse HandleRequest(HttpRequest request,bool reset);
 
+        //this try to handle the Request and if it failed it will return error or 404
+        private IHttpResponse TryHandleRequest(HandleRequest page,HttpRequest request,bool reset, bool ReturnError)
+        {
+            try
+            {
+               return page.Invoke(request, reset);
+            }
+            catch(Exception ex)
+            {
+                if (ReturnError)
+                {
+                    return HttpResponse.InternalServerError(ex.ToString());
+                }
+                else
+                {
+                    return HttpResponse.BadRequest();
+                }
+            }
+
+        }
         private async Task HandleRequestAsync(Socket client)
         {
             try
@@ -143,7 +200,7 @@ namespace LunaHost
                     int bytesReceived = await client.ReceiveAsync(data, SocketFlags.None);
                     string requestString = Encoding.UTF8.GetString(data, 0, bytesReceived);
 
-                   if(LogRequest)
+                    if (LogRequest)
                         Console.WriteLine(requestString);
 
                     HttpRequest httpRequest = new(requestString);
@@ -151,7 +208,7 @@ namespace LunaHost
 
                     PageContent? pageContent = GetPageContent(httpRequest);
                     IHttpResponse httpResponse = pageContent != null
-                        ? pageContent.HandleRequest(httpRequest)
+                        ? TryHandleRequest(pageContent.HandleRequest, httpRequest, false, InDebugMode)
                         : HttpResponse.NotFound();
 
                     OnResponseSent?.Invoke(httpRequest, httpResponse);
@@ -165,6 +222,7 @@ namespace LunaHost
             }
             catch (Exception ex)
             {
+
                 Console.WriteLine("Error handling request: " + ex.Message);
             }
         }

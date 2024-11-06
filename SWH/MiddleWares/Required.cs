@@ -7,8 +7,10 @@ using LunaHost.Interfaces;
 using LunaHost;
 using MiddleWares;
 using System.Text.RegularExpressions;
+using LunaHost.Attributes.MiddleWares;
 
 [AttributeUsage(AttributeTargets.Parameter)]
+[AsMiddleWare]
 public class RequiredAttribute : Attribute, IMiddleWare
 {
     private readonly int _minLen;

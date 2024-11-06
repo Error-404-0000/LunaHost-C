@@ -89,8 +89,10 @@ namespace LunaHost.HTTP.Main
             Dictionary<string,string> Route_values = new Dictionary<string,string>();
             foreach (var method in this.GetType().GetMethods().Where(x => x.ReturnType == typeof(IHttpResponse)))
             {
+                if (request is null)
+                    break;
                 method_attribute = null!;
-                if (request!.Method == HttpRequest.HttpMethod.GET)
+                if (request!?.Method == HttpRequest.HttpMethod.GET)
                 {
                     method_attribute = method.GetCustomAttribute<GetMethodAttribute>(true)!;
                 }
@@ -157,7 +159,8 @@ namespace LunaHost.HTTP.Main
                         method_attribute.Path = method_attribute.Path.Replace(replacement.Key, replacement.Value);
                     }
                 }
-
+                if (method_attribute.Path == "/")
+                    method_attribute.Path = "//";
                 string cleanedGetAttPath = RemoveFirstInstanceOfSegment(method_attribute.Path ?? "//", "/");
                 string cleanedRequestPath = RemoveFirstInstanceOfSegment(RemoveAfterQuestionMark(request.Path), RemoveFirstInstanceOfSegment(Path, "/"));
 
@@ -183,7 +186,7 @@ namespace LunaHost.HTTP.Main
             
             if (Func == null)
             {
-                var response = HttpResponse.NotFound("  Not Found " + request.Path);
+                var response = HttpResponse.NotFound("  Not Found " + request?.Path??"");
                 response.Headers["Content-Type"] = "application/json";
                 return response;
             }
@@ -448,14 +451,27 @@ namespace LunaHost.HTTP.Main
         /// <returns>The modified string with the first occurrence of the segment removed, or the original string if not found.</returns>
         static string RemoveFirstInstanceOfSegment(string input, string segment)
         {
-            int index = input.IndexOf(segment);
+            if (string.IsNullOrEmpty(input) || string.IsNullOrEmpty(segment))
+            {
+                return input;
+            }
+
+            int index = input.IndexOf(segment, StringComparison.Ordinal);
             if (index == -1)
             {
                 return input;
             }
-            string before = input.Substring(0, index).TrimEnd('/');
-            string after = input.Substring(index + segment.Length).TrimStart('/');
-            return before.Length > 0 && after.Length > 0 ? $"{before}/{after}" : before + after;
+
+            try
+            {
+                string before = input.Substring(0, index).TrimEnd('/');
+                string after = input.Substring(index + segment.Length).TrimStart('/');
+                return before.Length > 0 && after.Length > 0 ? $"{before}/{after}" : before + after;
+            }
+            catch
+            {
+                return input; // Safe fallback in case of unexpected error
+            }
         }
 
         /// <summary>

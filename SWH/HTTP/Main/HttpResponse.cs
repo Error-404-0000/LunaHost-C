@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using LunaHost.HTTP.Interface;
+using Newtonsoft.Json;
 
 namespace LunaHost.HTTP.Main
 {
@@ -148,6 +149,10 @@ namespace LunaHost.HTTP.Main
             response.SetStatus(503, "Service Unavailable");
             response.SetBody(body);
             return response;
+        }
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this);
         }
 
     }
