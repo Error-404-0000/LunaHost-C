@@ -18,27 +18,44 @@ namespace LunaHost_Test
             public int CacheCode { get; set; }
 
         }
+        public static MyCacheableObject Call2()
+        {
+            Console.WriteLine("Called");
+            Thread.Sleep(1000);
+
+            return new MyCacheableObject() { Name = "Test", Id = 200 };
+        }
+        public static MyCacheableObject Call()
+        {
+            Console.WriteLine("Called 2");
+            Thread.Sleep(1000);
+
+            return new MyCacheableObject() { Name = "Test", Id = 0 };
+
+        }
         static void Main(string[] args)
         {
-
-            while (true)
-            {Cache<MyCacheableObject> cache = new Cache<MyCacheableObject>(20);
-
-            }
-            Console.ReadLine();
-            #region
-            //using (LunaHostBuilder Builder = new LunaHostBuilder(1))
+            //Cache<MyCacheableObject> cache = new Cache<MyCacheableObject>(20);
+            //while (true)
             //{
+            //    Console.WriteLine(cache.Invoke(Call).Name);
+            //    Console.WriteLine(cache.Invoke(Call2).Id);
 
-            //    //returns full error
-            //    Builder.InDebugMode = true;
-            //    Builder.Add(new FirewallBlocked());
-            //    Builder.Add(new Logger());
-            //    Builder.Add(new UserApi());
-            //    Builder.Add(new AccountContent());
-            //    Builder.UseSwagger = true;
-            //    Builder.BuildAsync().Wait();
             //}
+            //Console.ReadLine();
+            #region
+            using (LunaHostBuilder Builder = new LunaHostBuilder(1))
+            {
+
+                //returns full error
+                Builder.InDebugMode = true;
+                Builder.Add(new FirewallBlocked());
+                Builder.Add(new Logger());
+                Builder.Add(new UserApi());
+                Builder.Add(new AccountContent());
+                Builder.UseSwagger = true;
+                Builder.BuildAsync().Wait();
+            }
             #endregion
         }
         #region Code

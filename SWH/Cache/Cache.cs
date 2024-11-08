@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace LunaHost_Test
+namespace LunaHost.Cache
 {
-    public class Cache<T> where T : ICacheable 
+    public class Cache<T> where T :ICacheable 
     {
         public int Capacity { get; }
         public CacheItem<T>[] CacheItems { get; }
@@ -93,19 +93,23 @@ namespace LunaHost_Test
 
 
         }
+        public  T Invoke(Delegate func, params object[] args) 
+        {
+            return Invoke<T>(func, args);
+        }
         //awaiting impl
-        public unsafe T Invoke(Delegate func,params dynamic[] args) 
+        public unsafe TResult Invoke<TResult>(Delegate func, params object[] args) where TResult : T
         {
             var hashcode = (ICacheable.GenerateCacheHashCode(func,func.Method.Name, args));
             hashcode = hashcode < 0 ? -hashcode : hashcode;
             if (Any(hashcode) is var result && result.any )
             {
                 Console.WriteLine("Did not invoke method");
-                return *CacheItems[last_return.index].TValue;
+                return *(TResult*)CacheItems[last_return.index].TValue;
             }
             Console.WriteLine("Called and invoked");
-            var res =  (T)func.DynamicInvoke(args)!;
-            T* ptr = (T*)Unsafe.AsPointer<T>(ref res);
+            var res =  (TResult)func.DynamicInvoke(args)!;
+            T* ptr = (T*)Unsafe.AsPointer<TResult>(ref res);
             var object_size = (int)GetObjectSize(res);
             var new_ptr = Marshal.AllocHGlobal(object_size);
             Buffer.MemoryCopy((void*)ptr, (void*)new_ptr, object_size, object_size);
@@ -116,7 +120,7 @@ namespace LunaHost_Test
                 TSO = Expire
             };
             Pin(ref cacheItem);
-            return res;
+            return (TResult)res;
           
 
         }

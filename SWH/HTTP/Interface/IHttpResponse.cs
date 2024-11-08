@@ -1,6 +1,8 @@
-﻿namespace LunaHost.HTTP.Interface
+﻿using LunaHost.Cache;
+
+namespace LunaHost.HTTP.Interface
 {
-    public interface IHttpResponse
+    public interface IHttpResponse:ICacheable
     {
         int StatusCode { get; set; }
         string ReasonPhrase { get; set; }

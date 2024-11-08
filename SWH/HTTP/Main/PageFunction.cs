@@ -15,15 +15,17 @@ using System.Threading.Tasks;
 using Interfaces;
 using MiddleWares;
 using Attributes;
+using LunaHost.Cache;
 
 namespace LunaHost.HTTP.Main
 {
   
-    public abstract class PageContent : IDisposable
+    public abstract class PageContent : IDisposable,ICacheable
     {
         protected HttpRequest? request;
      
         public string Path { get; }
+        public  int CacheCode { get; set; }
 
         protected PageContent(string Path)
         {

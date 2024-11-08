@@ -37,6 +37,8 @@ namespace LunaHost
                 ConfigureSwaggerContent();
             }
         }
+        public Cache.Cache<IHttpResponse> RequestCache = new Cache.Cache<IHttpResponse>(20, 20);
+        public Cache.Cache<PageContent> PageContentCache = new Cache.Cache<PageContent>(20, 5);
 
         public void ConfigureSwaggerContent()
         {
@@ -172,11 +174,11 @@ namespace LunaHost
         public delegate IHttpResponse HandleRequest(HttpRequest request,bool reset);
 
         //this try to handle the Request and if it failed it will return error or 404
-        private IHttpResponse TryHandleRequest(HandleRequest page,HttpRequest request,bool reset, bool ReturnError)
+        private IHttpResponse TryHandleRequest(Delegate page,HttpRequest request,bool reset, bool ReturnError)
         {
             try
             {
-               return page.Invoke(request, reset);
+               return (IHttpResponse)page.DynamicInvoke(request, reset);
             }
             catch(Exception ex)
             {
@@ -207,9 +209,9 @@ namespace LunaHost
                     HttpRequest httpRequest = new(requestString);
                     OnRequestReceived?.Invoke(httpRequest);
 
-                    PageContent? pageContent = GetPageContent(httpRequest);
+                    PageContent? pageContent = PageContentCache.Invoke(GetPageContent,httpRequest);
                     IHttpResponse httpResponse = pageContent != null
-                        ? TryHandleRequest(pageContent.HandleRequest, httpRequest, false, InDebugMode)
+                        ? RequestCache.Invoke(TryHandleRequest,pageContent.HandleRequest, httpRequest, false, InDebugMode)
                         : HttpResponse.NotFound();
 
                     OnResponseSent?.Invoke(httpRequest, httpResponse);

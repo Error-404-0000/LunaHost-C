@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using LunaHost.Cache;
 using LunaHost.HTTP.Interface;
 using Newtonsoft.Json;
 
@@ -10,6 +11,7 @@ namespace LunaHost.HTTP.Main
         public string ReasonPhrase { get; set; }
         public Dictionary<string, string> Headers { get; set; } = new Dictionary<string, string>();
         public string Body { get; set; }
+        public int CacheCode { get; set; }
 
         public HttpResponse()
         {
@@ -155,6 +157,7 @@ namespace LunaHost.HTTP.Main
             return JsonConvert.SerializeObject(this);
         }
 
+     
     }
 
 }
