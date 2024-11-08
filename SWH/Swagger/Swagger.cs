@@ -20,7 +20,7 @@ namespace Swegger
         private readonly IEnumerable<PageContent> _pages;
         public record OpenApiSpec(List<Server> servers, Info info, string swagger_version);
         public record Info(string title, string version, string description);
-        public record Server([JsonProperty("-url")] string url, string description);
+        public record Server(string url, string description);
         OpenApiSpec Swegger_info = null!;
         string openaiV = null!;
         string OpenAISpec_JSON = null;

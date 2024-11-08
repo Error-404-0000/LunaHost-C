@@ -69,7 +69,7 @@ namespace LunaHost
 
             if (!pageContents.Any(y => y is SwaggerUIContent))
             {
-                this.Add(new SwaggerUIContent("C:\\Users\\Demon\\source\\repos\\webHosting\\SWH\\Swegger\\dist\\"));
+                this.Add(new SwaggerUIContent("C:\\Users\\Demon\\source\\repos\\webHosting\\SWH\\Swagger\\dist\\"));
             }
         }
 
@@ -86,12 +86,13 @@ namespace LunaHost
         private bool Stop { get; set; } = false;
         private Socket socket;
 
-        public LunaHostBuilder(int Capacity = 10 << 2)
+        public LunaHostBuilder(int Capacity)
         {
             pageContents.Add(new HealthCheckPage());
             this.Capacity = Capacity;
-
+           
         }
+        public LunaHostBuilder() : this(10 << 2) { }
 
         public void Add(PageContent content)
         {

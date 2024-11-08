@@ -7,18 +7,17 @@
     <AssemblyName>LunaHost</AssemblyName>
     <RootNamespace>$(LunaHost.Replace(" ", "_"))</RootNamespace>
     <OutputType>Library</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Swegger\dist\index.html" />
+    <Compile Remove="Swegger\**" />
+    <EmbeddedResource Remove="Swegger\**" />
+    <None Remove="Swegger\**" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Swegger\dist\index.html" />
   </ItemGroup>
 
 </Project>
