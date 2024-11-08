@@ -278,6 +278,7 @@ namespace LunaHost_Test
         [GetMethod("/get-all-logs")]
         public IHttpResponse GetLogs()
         {
+            Task.Delay(10000).Wait();
             var re = new HttpResponse()
             {
                 Body = string.Join(",\n", LoggerAttribute.Loggers),

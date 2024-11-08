@@ -17,41 +17,9 @@ namespace LunaHost.Cache
         }
         public static int GenerateCacheHashCode(params object[] values)
         {
-            if (values == null) throw new ArgumentNullException(nameof(values));
-
-            unchecked
-            {
-                int hash = 17;
-                foreach (var value in values)
-                {
-                    if (value != null)
-                    {
-                        hash = hash * 31 + GetDeterministicHashCode(value);
-                    }
-                }
-                return hash;
-            }
+            return CacheHashCodeGenerator.GenerateCacheHashCode(values);
         }
-        private static int GetDeterministicHashCode(object value)
-        {
-            if (value is string strValue)
-            {
-                return StringComparer.Ordinal.GetHashCode(strValue);
-            }
-            else if (value is IEnumerable<object> enumerable)
-            {
-                int hash = 17;
-                foreach (var item in enumerable)
-                {
-                    hash = hash * 31 + (item?.GetHashCode() ?? 0);
-                }
-                return hash;
-            }
-            else
-            {
-                return value.GetHashCode();
-            }
-        }
+       
 
         public static int GenerateCacheHashCode(ICacheable obj)
         {

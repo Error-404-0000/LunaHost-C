@@ -38,7 +38,7 @@ namespace LunaHost
             }
         }
         public Cache.Cache<IHttpResponse> RequestCache = new Cache.Cache<IHttpResponse>(20, 20);
-        public Cache.Cache<PageContent> PageContentCache = new Cache.Cache<PageContent>(20, 5);
+        public Cache.Cache<PageContent> PageContentCache = new Cache.Cache<PageContent>(10, 10);
 
         public void ConfigureSwaggerContent()
         {
@@ -178,7 +178,7 @@ namespace LunaHost
         {
             try
             {
-               return (IHttpResponse)page.DynamicInvoke(request, reset);
+               return (IHttpResponse)page.DynamicInvoke(request, reset)!;
             }
             catch(Exception ex)
             {
@@ -211,14 +211,21 @@ namespace LunaHost
 
                     PageContent? pageContent = PageContentCache.Invoke(GetPageContent,httpRequest);
                     IHttpResponse httpResponse = pageContent != null
-                        ? RequestCache.Invoke(TryHandleRequest,pageContent.HandleRequest, httpRequest, false, InDebugMode)
+                        ? RequestCache.Invoke<IHttpResponse>(TryHandleRequest,pageContent.HandleRequest, httpRequest, false, InDebugMode)
                         : HttpResponse.NotFound();
 
                     OnResponseSent?.Invoke(httpRequest, httpResponse);
-
-                    string response = httpResponse.GetFullResponse();
-                    byte[] responseData = Encoding.UTF8.GetBytes(response);
-
+                    byte[] responseData = [0];
+                    try
+                    {
+                        string response = httpResponse.GetFullResponse();
+                         responseData = Encoding.UTF8.GetBytes(response);
+                    
+                    }
+                    catch{
+                        string response = HttpResponse.InternalServerError().GetFullResponse();
+                        responseData = Encoding.UTF8.GetBytes(response);
+                    }
                     await client.SendAsync(responseData, SocketFlags.None);
                     client.Shutdown(SocketShutdown.Both);
                 }

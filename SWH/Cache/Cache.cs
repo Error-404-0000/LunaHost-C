@@ -10,59 +10,71 @@ using System.Threading.Tasks;
 
 namespace LunaHost.Cache
 {
-    public class Cache<T> where T :ICacheable 
+    public class Cache<T> where T : ICacheable
     {
         public int Capacity { get; }
         public CacheItem<T>[] CacheItems { get; }
-        private int index = 0;
-        private int Expire { get; set; } 
-        
-        public Cache(int Capacity,int ExpireAfterCall = 10)
+        private int _index;
+        private object index_lock = new object();
+        private int index
+        {
+            get => _index;
+            set
+            {
+                lock (index_lock)
+                {
+                    _index = value;
+                }
+            }
+        }
+        private int Expire { get; set; }
+
+        public Cache(int Capacity, int ExpireAfterCall = 10)
         {
             Expire = ExpireAfterCall;
-            CacheItems = new CacheItem<T>[this.Capacity =Capacity];
+            CacheItems = new CacheItem<T>[this.Capacity = Capacity];
         }
         public int GetExpiredOrCloseToExpired()
         {
-            CacheItem<T>? item = CacheItems.OrderBy(x => x.TSO).FirstOrDefault() ;
+            CacheItem<T>? item = CacheItems.OrderBy(x => x.TTL).FirstOrDefault();
             if (item is null)
                 return 0;
 
             return CacheItems.ToList().IndexOf(item.Value);
         }
-        private (int CacheCode,int index,int exp) last_return = default;
-        public  (bool any,int TValue_Index) Any(int CacheCode)
+        private (int CacheCode, int index, int exp) last_return = default;
+        public (bool any, int TValue_Index) Any(int CacheCode)
         {
             int index_c = 0;
-            if(last_return.CacheCode == CacheCode && last_return.exp != 0)
+            if (last_return.CacheCode == CacheCode && last_return.exp != 0)
             {
-                CacheItems[last_return.index].TSO = --last_return.exp;
+                CacheItems[last_return.index].TTL = --last_return.exp;
                 return (true, last_return.index);
 
             }
-            else if ((CacheItems.FirstOrDefault(x => x.CacheEquals(CacheCode)  &&(index_c++== index_c-1)) is CacheItem<T> cache && cache.IsNotNullOrDefault() ))
+            else if ((CacheItems.FirstOrDefault(x => x.CacheEquals(CacheCode) && (index_c++ == index_c - 1)) is CacheItem<T> cache && cache.IsNotNullOrDefault()))
             {
                 if (cache.IsExpired())
                     return (false, default);
-                   
-                    last_return=(CacheCode,index_c-1<0?0:index_c-1, CacheItems[last_return.index].TSO--);
-               
-                    return (true, last_return.index);
-                
+                index_c = index_c - 1 < 0 ? 0 : index_c;
+                last_return = (CacheCode, index_c, CacheItems[index_c].TTL--);
+
+                return (true, index_c);
+
             }
-            return (false,-1);
+            return (false, -1);
         }
 
-        public unsafe ref T NewRef(ref T obj) 
+        public unsafe ref T NewRef(ref T obj)
         {
-            if(last_return != default && last_return.CacheCode==obj.CacheCode)
+            if (last_return != default && last_return.CacheCode == obj.CacheCode)
             {
                 GC.SuppressFinalize(obj);
                 return ref *CacheItems[last_return.index].TValue;
             }
-            if(Any(obj.GetCacheCode()) is var result && result.any )
+            if (Any(obj.GetCacheCode()) is var result && result.any)
             {
-               GC.SuppressFinalize(obj);
+                GC.SuppressFinalize(obj);
                 return ref *CacheItems[result.TValue_Index].TValue;
             }
             if (obj is ICacheable cache)
@@ -70,10 +82,10 @@ namespace LunaHost.Cache
             else
                 throw new Exception("Not Match.T must be ICacheable");
             throw new Exception("TResult does not match the value returned.");
-            
-            
+
+
         }
-        public unsafe  T New(ref T obj)
+        public unsafe T New(ref T obj)
         {
             if (last_return != default && last_return.CacheCode == obj.CacheCode)
             {
@@ -86,29 +98,32 @@ namespace LunaHost.Cache
                 return *CacheItems[result.TValue_Index].TValue;
             }
             if (obj is ICacheable cache)
-                return  *CacheItems[Pin(ref cache)].TValue;
+                return *CacheItems[Pin(ref cache)].TValue;
             else
                 throw new Exception("Not Match.T must be ICacheable");
             throw new Exception("TResult does not match the value returned.");
 
 
         }
-        public  T Invoke(Delegate func, params object[] args) 
+        public T Invoke(Delegate func, params object[] args)
         {
             return Invoke<T>(func, args);
         }
         //awaiting impl
         public unsafe TResult Invoke<TResult>(Delegate func, params object[] args) where TResult : T
         {
-            var hashcode = (ICacheable.GenerateCacheHashCode(func,func.Method.Name, args));
+#pragma warning disable
+            var hashcode = (ICacheable.GenerateCacheHashCode(func.Method.Name, args));
             hashcode = hashcode < 0 ? -hashcode : hashcode;
-            if (Any(hashcode) is var result && result.any )
+            if (Any(hashcode) is var result && result.any)
             {
+                GC.SuppressFinalize(func);
+                GC.SuppressFinalize(args);
                 Console.WriteLine("Did not invoke method");
-                return *(TResult*)CacheItems[last_return.index].TValue;
+                return *(TResult*)CacheItems[result.TValue_Index].TValue;
             }
             Console.WriteLine("Called and invoked");
-            var res =  (TResult)func.DynamicInvoke(args)!;
+            var res = (TResult)func.DynamicInvoke(args)!;
             T* ptr = (T*)Unsafe.AsPointer<TResult>(ref res);
             var object_size = (int)GetObjectSize(res);
             var new_ptr = Marshal.AllocHGlobal(object_size);
@@ -116,37 +131,36 @@ namespace LunaHost.Cache
             CacheItem<T> cacheItem = new CacheItem<T>()
             {
                 CacheCode = hashcode,
-                TValue = (T*)new_ptr,
-                TSO = Expire
+                TValue = (T*)(TResult*)new_ptr,
+                TTL = Expire
             };
             Pin(ref cacheItem);
             return (TResult)res;
-          
 
+#pragma warning restore
+        }
+        unsafe void FreeMem(T* obj)
+        {
+            if (obj is not null &&(nint)obj != 0)
+            {
+                Marshal.FreeCoTaskMem((nint)obj);
+            }
         }
         public void Pin(ref CacheItem<T> cacheItem)
         {
-            if (index + 1 >= Capacity)
+            index = index = GetExpiredOrCloseToExpired();
+            unsafe
             {
-                //resetting from top
-                index = 0;
-                unsafe
-                {
-                    Marshal.FreeCoTaskMem((nint)CacheItems[index].TValue);
-                }
+                FreeMem(CacheItems[index].TValue);
             }
-            CacheItems[index++]=cacheItem;
+            CacheItems[index] = cacheItem;
         }
         public int Pin(ref ICacheable cacheable)
         {
-            if(index+1>=Capacity)
+            index = index = GetExpiredOrCloseToExpired();
+            unsafe
             {
-                //resetting from top
-                index = GetExpiredOrCloseToExpired();
-                unsafe
-                {
-                    Marshal.FreeCoTaskMem((nint)CacheItems[index].TValue);
-                }
+                FreeMem(CacheItems[index].TValue);
             }
             unsafe
             {
@@ -158,19 +172,19 @@ namespace LunaHost.Cache
                 Buffer.MemoryCopy((void*)ptr, (void*)new_ptr, object_size, object_size);
                 CacheItem<T> new_pin = new CacheItem<T>()
                 {
-                    TSO = Expire,
+                    TTL = Expire,
                     TValue = (T*)new_ptr,
                     CacheCode = ptr->GetCacheCode()
                 };
 
-                CacheItems[index++]=new_pin;
+                CacheItems[index] = new_pin;
                 GC.SuppressFinalize(cacheable);
-                return index-1 < 0 ? 0 : index - 1;
+                return index - 1 < 0 ? 0 : index - 1;
 #pragma warning restore
             }
-           
 
-           
+
+
         }
 
         public static long GetObjectSize(object obj)
