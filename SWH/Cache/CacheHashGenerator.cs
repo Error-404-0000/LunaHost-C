@@ -34,7 +34,6 @@ public static class CacheHashCodeGenerator
         }
         else if (value is IEnumerable enumerable)
         {
-            // Handle collections in a deterministic manner
             unchecked
             {
                 int hash = 17;
@@ -47,12 +46,11 @@ public static class CacheHashCodeGenerator
         }
         else if (value.GetType().IsValueType)
         {
-            // For value types, use their default hash code
             return value.GetHashCode();
         }
         else
         {
-            // Use a consistent hash function for reference types
+           
             return GetMD5HashCode(value.ToString());
         }
     }
@@ -63,11 +61,8 @@ public static class CacheHashCodeGenerator
         {
             byte[] inputBytes = Encoding.UTF8.GetBytes(input);
             byte[] hashBytes = md5.ComputeHash(inputBytes);
-            // Convert first 4 bytes of hash to an integer
             return BitConverter.ToInt32(hashBytes, 0);
         }
     }
 }
 
-// Example usage
-// int hash = HashCodeGenerator.GenerateCacheHashCode("example", new int[] { 1, 2, 3 }, 42);
