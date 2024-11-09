@@ -203,13 +203,11 @@ namespace LunaHost.Cache
             processedObjects.Add(obj);
             Type type = obj.GetType();
 
-            // Handle primitive and fixed-size types directly
             if (type.IsPrimitive || obj is decimal || obj is IntPtr)
             {
                 return System.Runtime.InteropServices.Marshal.SizeOf(type);
             }
 
-            // Estimate size for arrays by summing up each element's size
             if (type.IsArray)
             {
                 long size = 0;
@@ -220,9 +218,8 @@ namespace LunaHost.Cache
                 return size;
             }
 
-            long totalSize = IntPtr.Size;  // Start with object header size (approximate)
+            long totalSize = IntPtr.Size;  
 
-            // Process each field in the object, recursively adding their sizes
             foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
             {
                 object fieldValue = field.GetValue(obj);
