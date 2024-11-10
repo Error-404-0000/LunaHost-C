@@ -1,4 +1,4 @@
-﻿using LunaHost;
+using LunaHost;
 using LunaHost.Attributes;
 using LunaHost.Attributes.HttpMethodAttributes;
 using LunaHost.HTTP.Interface;
@@ -11,38 +11,10 @@ namespace LunaHost_Test
 {
     internal class Program
     {
-        public class MyCacheableObject : ICacheable
-        {
-            public int Id { get; set; }
-            public string Name { get; set; }
-            public int CacheCode { get; set; }
-
-        }
-        public static MyCacheableObject Call2()
-        {
-            Console.WriteLine("Called");
-            Thread.Sleep(1000);
-
-            return new MyCacheableObject() { Name = "Test", Id = 200 };
-        }
-        public static MyCacheableObject Call()
-        {
-            Console.WriteLine("Called 2");
-            Thread.Sleep(1000);
-
-            return new MyCacheableObject() { Name = "Test", Id = 0 };
-
-        }
+        
         static void Main(string[] args)
         {
-            //Cache<MyCacheableObject> cache = new Cache<MyCacheableObject>(20);
-            //while (true)
-            //{
-            //    Console.WriteLine(cache.Invoke(Call).Name);
-            //    Console.WriteLine(cache.Invoke(Call2).Id);
-
-            //}
-            //Console.ReadLine();
+            
             #region
             using (LunaHostBuilder Builder = new LunaHostBuilder(1))
             {
@@ -59,6 +31,7 @@ namespace LunaHost_Test
             #endregion
         }
         #region Code
+
         public class AccountContent : PageContent
         {
             [PostMethod("/register")]
@@ -179,98 +152,7 @@ namespace LunaHost_Test
             }
         }
     }
-    public class FirewallBlocked : PageContent
-    {
-        public FirewallBlocked():base("/firewallblocked")
-        {
-            
-        }
-        [GetMethod("/blocked")]
-        public IHttpResponse Get()
-        {
-            return HttpResponse.OK(@"<!DOCTYPE html>
-<html lang=""en"">
-<head>
-    <meta charset=""UTF-8"">
-    <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"">
-    <title>Blocked by Firewall</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: Arial, sans-serif;
-        }
-
-        body {
-            background-color: #f7f7f7;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        .container {
-            background-color: #fff;
-            border: 1px solid #ccc;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-            text-align: left;
-        }
-
-        .http-status {
-            font-size: 24px;
-            color: #d9534f;
-            margin-bottom: 20px;
-        }
-
-        .header {
-            font-size: 14px;
-            color: #555;
-            margin-bottom: 5px;
-        }
-
-        .message {
-            margin-top: 20px;
-            padding: 20px;
-            background-color: #f2dede;
-            border: 1px solid #ebccd1;
-            border-radius: 5px;
-        }
-
-        .message h2 {
-            color: #a94442;
-            font-size: 22px;
-            margin-bottom: 10px;
-        }
-
-        .message p {
-            color: #a94442;
-            font-size: 16px;
-        }
-    </style>
-</head>
-<body>
-    <div class=""container"">
-        <h1 class=""http-status"">HTTP/1.1 403 Forbidden</h1>
-        <p class=""header"">Server:  </p>
-        <p class=""header"">Date: Tue, 16 Oct 2024 10:30:00 GMT</p>
-        <p class=""header"">Content-Type: text/html; charset=UTF-8</p>
-        <p class=""header"">Content-Length: 636</p>
-        <p class=""header"">Connection: close</p>
-
-        <div class=""message"">
-            <h2>Blocked by Firewall</h2>
-            <p>Your request was blocked due to security rules. Please contact your administrator for more details.</p>
-        </div>
-    </div>
-</body>
-</html>
-");
-        }
-    }
+    
     public class Logger : PageContent
     {
         public Logger() : base("/logs")
