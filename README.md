@@ -68,7 +68,7 @@ Create complex and dynamic routes like `/user/{username}/profile/{section}` for 
 ### 🔧 Setup Time!
 1. **Clone the Repo**:
    ```bash
-   git clone https://github.com/yourusername/LunaHost.git
+   git clone https://github.com/Error-404-0000/LunaHost.git
    cd LunaHost
    ```
 2. **Add Swagger UI**: 
