@@ -1,4 +1,6 @@
-﻿namespace LunaHost.Cache
+﻿using System.Reflection;
+
+namespace LunaHost.Cache
 {
     public interface ICacheable
     {
@@ -11,7 +13,7 @@
         {
             return CacheHashCodeGenerator.GenerateCacheHashCode(values);
         }
-
+   
 
         public static int GenerateCacheHashCode(ICacheable obj)
         {

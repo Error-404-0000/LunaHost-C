@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 using LunaHost.HTTP.Helper;
 using Swegger;
+using LunaHost.Cache;
 
 namespace LunaHost
 {
@@ -37,8 +38,8 @@ namespace LunaHost
                 ConfigureSwaggerContent();
             }
         }
-        public Cache.Cache<IHttpResponse> RequestCache = new Cache.Cache<IHttpResponse>(20, 20);
-        public Cache.Cache<PageContent> PageContentCache = new Cache.Cache<PageContent>(10, 10);
+        public Cache<IHttpResponse> RequestCache = new Cache<IHttpResponse>(20, 20);
+        public Cache<PageContent> PageContentCache = new Cache<PageContent>(10, 10);
 
         public void ConfigureSwaggerContent()
         {
@@ -71,7 +72,7 @@ namespace LunaHost
 
             if (!pageContents.Any(y => y is SwaggerUIContent))
             {
-                this.Add(new SwaggerUIContent("C:\\Users\\Demon\\source\\repos\\webHosting\\SWH\\Swagger\\dist\\"));
+                this.Add(new SwaggerUIContent("C:\\Users\\Demon\\source\\repos\\LunaHost\\SWH\\Swagger\\dist\\"));
             }
         }
 

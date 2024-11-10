@@ -1,35 +1,35 @@
 ﻿namespace LunaHost.Cache
 {
-    public unsafe struct CacheItem<T> : ICacheable where T : ICacheable
+    public struct CacheItem<T> : ICacheable where T : ICacheable
     {
         public int TTL;
-        public T* TValue;
+        public T TValue;
         public int CacheCode { get; set; }
-        public bool IsNotNullOrDefault()
+        public readonly bool IsNotNullOrDefault()
         {
             return !IsNull();
         }
 
-        public bool IsNull()
+        public readonly bool IsNull()
         {
-            return (nint)TValue == 0 || CacheCode == 0;
+            return TValue is null;
         }
         public bool SubTSO(int index)
         {
             TTL -= index;
             return true;
         }
-        public bool CacheEquals(int _CacheCode)
+        public readonly bool CacheEquals(int _CacheCode)
         {
             return CacheCode == _CacheCode;
         }
 
-        public bool IsExpired()
+        public readonly bool IsExpired()
         {
             return TTL <= 0;
         }
 
-        public override int GetHashCode()
+        public readonly override int GetHashCode()
         {
             return (this as ICacheable).GetCacheCode();
         }

@@ -217,7 +217,7 @@ namespace LunaHost.HTTP.Main
                  result = InvokeMiddleWareAsync(item.GetCustomAttributes(true).Where(x => x is IMiddleWare).Cast<IMiddleWare>(), paramValue).Result;
                 if (!result.Success)
                     return result.Response;
-                p_set.Add(paramValue??default(object));
+                p_set.Add(paramValue??(item.HasDefaultValue?item.DefaultValue:default(object)));
             }
             p_set = p_set
                      .Select(item => item is string str ? str.Replace("\u0000", string.Empty) : item)
@@ -381,7 +381,7 @@ namespace LunaHost.HTTP.Main
             }
             catch
             {
-                return null;
+                return null ;
             }
         }
        
