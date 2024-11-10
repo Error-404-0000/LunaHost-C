@@ -21,7 +21,7 @@ namespace LunaHost_Test
 
                 //returns full error
                 Builder.InDebugMode = true;
-                Builder.Add(new FirewallBlocked());
+                
                 Builder.Add(new Logger());
                 Builder.Add(new UserApi());
                 Builder.Add(new AccountContent());
