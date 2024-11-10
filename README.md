@@ -73,11 +73,12 @@ Create complex and dynamic routes like `/user/{username}/profile/{section}` for 
    ```
 2. **Add Swagger UI**: 
    ```csharp
-   UseSwagger =true;
-```
+   UseSwagger = true;
+   ```
 ##  Examples:
 ### Capture Parameters with Validation
-Want to capture both route and query parameters? Here’s how you do it, Luna-style!
+Want to capture both route and query parameters? Here’s how you do it, Luna-style
+
 ```csharp
 public class UserProfile : PageContent
 {
