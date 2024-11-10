@@ -2,7 +2,7 @@
 
 Hey there! Welcome to **LunaHost**—your super lightweight and powerful custom HTTP server in C#! LunaHost is here to make handling HTTP requests a breeze, with lots of cool features like flexible routing, middleware, and even Swagger UI for all your interactive docs! Think of it as a compact yet feature-rich alternative to ASP.NET!
 
-## 🌸 Features You’ll Love:
+## Feature:
 
 ### 💕 Attribute-Based Routing & Parameter Magic
 LunaHost lets you define your routes easily using attributes This makes setting up RESTful endpoints as simple as possible:
@@ -45,7 +45,7 @@ Need to keep track of what’s happening? LunaHost has built-in logging:
 - **Centralized Logs**: Access them anytime at `/logs`.
 - **Pagination**: Get them page by page if needed.
 
-### 🛠️ Health Check? No Prob!
+### 🛠️ Health Check
 A health-check endpoint to make sure Luna’s all good to go:
 - **Protected**: Access it using a unique build token at `/health/{Build_Token}/check`.
 
@@ -72,14 +72,10 @@ Create complex and dynamic routes like `/user/{username}/profile/{section}` for 
    cd LunaHost
    ```
 2. **Add Swagger UI**: 
-   - Download Swagger UI from GitHub.
-   - Place it in `Swagger/dist`. Update `swagger-initializer.js`.
-
-3. **Run the Server**:
-   - Open your fave IDE.
-   - Run `Program.cs` and visit `http://localhost/docs`. 📚
-
-## 🌟 Cute Examples:
+   ‘’’csharp
+UseSwagger =true;
+‘’’
+##  Examples:
 ### Capture Parameters with Validation
 Want to capture both route and query parameters? Here’s how you do it, Luna-style!
 ```csharp
