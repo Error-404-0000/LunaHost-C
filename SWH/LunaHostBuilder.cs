@@ -1,14 +1,10 @@
 ﻿using Newtonsoft.Json;
 using LunaHost.HTTP.Interface;
 using LunaHost.HTTP.Main;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
-using System.Runtime.InteropServices;
 using LunaHost.HTTP.Helper;
 using Swegger;
 using CacheLily;
@@ -57,7 +53,7 @@ namespace LunaHost
                     (
                         title: nameof(SwaggerUIContent),
                         version: Openapi ?? "3.0.0",
-                        description: "LunaHost HTTP."
+                        description: "LunaHost 1.0.0"
                     ),
                     servers: new()
                     {
@@ -78,13 +74,15 @@ namespace LunaHost
 
             if (!pageContents.Any(y => y is SwaggerUIContent))
             {
-                this.Add(new SwaggerUIContent("C:\\Users\\Demon\\source\\repos\\LunaHost\\SWH\\Swagger\\dist\\"));
+                this.Add(new SwaggerUIContent(".\\Swagger\\dist\\"));
             }
         }
+        public delegate void OnRequestReceived(object sender,HttpRequest request);
+        public delegate void OnResponseSent(object sender, HttpRequest request, IHttpResponse respon);
 
         public bool LogRequest { get; set; } = false;
-        public event Action<HttpRequest>? OnRequestReceived;
-        public event Action<HttpRequest, IHttpResponse>? OnResponseSent;
+        public event OnRequestReceived? onRequestReceived;
+        public event OnResponseSent? onResponseSent;
 
         /// <summary>
         /// Used primarily for private health checks at /health/{Build_Token}/check
@@ -214,14 +212,14 @@ namespace LunaHost
                         Console.WriteLine(requestString);
 
                     HttpRequest httpRequest = new(requestString);
-                    OnRequestReceived?.Invoke(httpRequest);
+                    onRequestReceived?.Invoke(this,httpRequest);
 
                     PageContent? pageContent = PageContentCache.Invoke(GetPageContent,httpRequest);
                     IHttpResponse httpResponse = pageContent != null
-                        ? RequestCache.Invoke(TryHandleRequest,()=>pageContent.HandleRequest, httpRequest, false, InDebugMode)
+                        ? RequestCache.Invoke(TryHandleRequest,pageContent.HandleRequest, httpRequest, false, InDebugMode)
                         : HttpResponse.NotFound();
 
-                    OnResponseSent?.Invoke(httpRequest, httpResponse);
+                    onResponseSent?.Invoke(this,httpRequest, httpResponse);
                     byte[] responseData = [0];
                     try
                     {
