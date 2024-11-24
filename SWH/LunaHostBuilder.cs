@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 using LunaHost.HTTP.Helper;
 using Swegger;
-using LunaHost.Cache;
+using CacheLily;
 
 namespace LunaHost
 {
@@ -28,7 +28,13 @@ namespace LunaHost
         public List<SwaggerContent.Server> Servers { get; set; }
         private SwaggerContent.OpenApiSpec openApiSpec { get; set; }
         public string Openapi { get; set; } = "3.0.0";
-        public bool InDebugMode { get; set; }
+
+        public readonly bool InDebugMode =
+#if DEBUG
+            true;
+#else
+      false;
+#endif
         public bool UseSwagger
         {
             get => _useSwagger;
@@ -38,8 +44,8 @@ namespace LunaHost
                 ConfigureSwaggerContent();
             }
         }
-        public Cache<IHttpResponse> RequestCache = new Cache<IHttpResponse>(20, 20);
-        public Cache<PageContent> PageContentCache = new Cache<PageContent>(10, 10);
+        public Cache<IHttpResponse> RequestCache = new(20, 20, predictiveMode: false);
+        public Cache<PageContent> PageContentCache = new(10, 10,predictiveMode:false);
 
         public void ConfigureSwaggerContent()
         {
@@ -212,7 +218,7 @@ namespace LunaHost
 
                     PageContent? pageContent = PageContentCache.Invoke(GetPageContent,httpRequest);
                     IHttpResponse httpResponse = pageContent != null
-                        ? RequestCache.Invoke<IHttpResponse>(TryHandleRequest,pageContent.HandleRequest, httpRequest, false, InDebugMode)
+                        ? RequestCache.Invoke(TryHandleRequest,()=>pageContent.HandleRequest, httpRequest, false, InDebugMode)
                         : HttpResponse.NotFound();
 
                     OnResponseSent?.Invoke(httpRequest, httpResponse);

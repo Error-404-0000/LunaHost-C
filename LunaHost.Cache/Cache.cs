@@ -12,7 +12,7 @@ namespace LunaHost.Cache
         public CacheItem<T>[] CacheItems { get; }
         private int _index;
         private readonly object index_lock = new();
-        private int index
+        private int Index
         {
             get => _index;
             set
@@ -45,11 +45,6 @@ namespace LunaHost.Cache
             return (false, default);
         }
         
- 
-
-        
-        
-
 
         public void AddOrUpdate(T item)
         {
@@ -61,8 +56,8 @@ namespace LunaHost.Cache
                 TTL = _expireAfterCalls
             };
 
-            index = GetExpiredOrCloseToExpired();
-            CacheItems[index] = cacheItem;
+            Index = GetExpiredOrCloseToExpired();
+            CacheItems[Index] = cacheItem;
         }
 
         public int GetExpiredOrCloseToExpired()
@@ -173,7 +168,7 @@ namespace LunaHost.Cache
         }
         public int Pin<Timpl>(ref ICacheable cacheable) where Timpl : T
         {
-            index = GetExpiredOrCloseToExpired();
+            Index = GetExpiredOrCloseToExpired();
             if(cacheable is not CacheItem<Timpl> )
             {
                 ICacheable newItem = new CacheItem<Timpl>
@@ -183,11 +178,11 @@ namespace LunaHost.Cache
                     TTL = _expireAfterCalls
                 }; 
                 GC.SuppressFinalize(cacheable);
-                CacheItems[index] = (CacheItem<T>)cacheable;
-                return index;
+                CacheItems[Index] = (CacheItem<T>)cacheable;
+                return Index;
             }
-            CacheItems[index] = (CacheItem<T>)cacheable;
-            return index;
+            CacheItems[Index] = (CacheItem<T>)cacheable;
+            return Index;
         }
  
 

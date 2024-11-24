@@ -1,4 +1,5 @@
-﻿using LunaHost.Attributes;
+﻿using CacheLily.Attributes;
+using LunaHost.Attributes;
 using LunaHost.Attributes.HttpMethodAttributes;
 using LunaHost.HTTP.Interface;
 using LunaHost.HTTP.Main;
@@ -11,6 +12,7 @@ namespace LunaHost.Test
 
         public UserApi() : base("/api/user") { }
 
+        [NoCaching]
         [PostMethod("/login")]
         public IHttpResponse Login([FromBody] string username, [FromBody] string password)
         {
@@ -28,7 +30,7 @@ namespace LunaHost.Test
             }
             return HttpResponse.Unauthorized("Invalid username or password");
         }
-
+        [NoCaching]
         [PostMethod("/register")]
         public IHttpResponse Register([FromBody] string username, [FromBody] string password)
         {
@@ -39,7 +41,7 @@ namespace LunaHost.Test
             _users[username] = password;
             return HttpResponse.OK("User registered successfully");
         }
-
+        [NoCaching]
         [GetMethod("/getToken")]
         public IHttpResponse GetToken([FromHeader] string username)
         {
@@ -54,7 +56,7 @@ namespace LunaHost.Test
             }
             return HttpResponse.NotFound("No token found for this user");
         }
-
+        [NoCaching]
         [PutMethod("/addUser")]
         public IHttpResponse AddUser([FromBody] string username, [FromBody] string password)
         {
@@ -65,7 +67,7 @@ namespace LunaHost.Test
             _users[username] = password;
             return HttpResponse.OK("User added successfully");
         }
-
+        [NoCaching]
         [PostMethod("/deleteUser")]
         public IHttpResponse DeleteUser([FromHeader] string username)
         {

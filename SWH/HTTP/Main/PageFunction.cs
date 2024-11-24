@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 using Interfaces;
 using MiddleWares;
 using Attributes;
-using LunaHost.Cache;
+using CacheLily;
 
 namespace LunaHost.HTTP.Main
 {

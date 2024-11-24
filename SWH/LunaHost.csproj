@@ -17,11 +17,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="CacheLily" Version="1.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\LunaHost.Cache\LunaHost.Cache.csproj" />
   </ItemGroup>
 
 </Project>

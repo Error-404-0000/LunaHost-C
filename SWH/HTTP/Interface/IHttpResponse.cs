@@ -1,4 +1,5 @@
-﻿using LunaHost.Cache;
+﻿
+using CacheLily;
 
 namespace LunaHost.HTTP.Interface
 {
@@ -12,6 +13,7 @@ namespace LunaHost.HTTP.Interface
         void SetStatus(int code, string reasonPhrase);
         void SetBody(string content, string contentType = "text/html");
         string GetFullResponse();
+
     }
 
 }

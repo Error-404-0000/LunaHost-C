@@ -9,7 +9,6 @@ namespace LunaHost_Test
         {
             using (LunaHostBuilder Builder = new(1))
             {
-                Builder.InDebugMode = true;
                 Builder.Add(new Logger());
                 Builder.Add(new UserApi());
                 Builder.Add(new AccountContent());
