@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Interfaces
+namespace LunaHost.Interfaces
 {
 
     public interface IMiddleWareResult<T1> where T1 : IHttpResponse

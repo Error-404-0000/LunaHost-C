@@ -1,4 +1,4 @@
-﻿using Interfaces;
+﻿using LunaHost.Interfaces;
 using LunaHost.HTTP.Interface;
 using System;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MiddleWares
+namespace LunaHost.MiddleWares
 {
     public class MiddleWareResult<T1> : IMiddleWareResult<T1> where T1 : IHttpResponse
     {

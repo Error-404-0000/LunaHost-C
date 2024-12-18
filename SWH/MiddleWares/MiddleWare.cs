@@ -1,9 +1,9 @@
-﻿using Interfaces;
+﻿
 using LunaHost.Attributes.MiddleWares;
 using LunaHost.HTTP.Interface;
 using LunaHost.HTTP.Main;
 using LunaHost.Interfaces;
-using MiddleWares;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,13 +14,10 @@ namespace LunaHost.MiddleWares
 {
 
     [AsMiddleWare]
-    public abstract class MiddleWare : IMiddleWare
+    public abstract class MiddleWareAttribute : Attribute,IMiddleWare
     {
 #pragma warning disable
-        public async Task<IMiddleWareResult<IHttpResponse>> ExecuteAsync(HttpRequest request,dynamic? none)
-        {
-           return new MiddleWareResult<IHttpResponse>(default(IHttpResponse),true);
-        }
+        public abstract  Task<IMiddleWareResult<IHttpResponse>> ExecuteAsync(HttpRequest request, dynamic? none);
 #pragma warning restore
     }
 }

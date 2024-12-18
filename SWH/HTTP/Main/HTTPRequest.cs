@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,6 +12,7 @@ namespace LunaHost
     {
 
         // p-s
+        public string SourceAddress { get; set; }
         public HttpMethod Method { get; private set; }
         public string Path { get; private set; }
         public string HttpVersion { get; private set; }

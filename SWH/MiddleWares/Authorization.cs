@@ -1,11 +1,10 @@
-﻿using Attributes;
-using Enums;
-using Interfaces;
+﻿using LunaHost.Attributes;
+using LunaHost.Enums;
 using LunaHost.Attributes.MiddleWares;
 using LunaHost.HTTP.Interface;
 using LunaHost.HTTP.Main;
 using LunaHost.Interfaces;
-using MiddleWares;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,15 +17,15 @@ namespace LunaHost.MiddleWares
     [AttributeUsage(AttributeTargets.Method)]
     public class AuthorizationAttribute : Attribute, IMiddleWare
     {
-     
 
-        public Task<IMiddleWareResult<IHttpResponse>> ExecuteAsync(HttpRequest request,dynamic? none)
+
+        public Task<IMiddleWareResult<IHttpResponse>> ExecuteAsync(HttpRequest request, [ObjectPrefer(Preferred.None)]dynamic? none)
         {
             if (!request.Headers.ContainsKey("Authorization"))
             {
                 return Task.FromResult<IMiddleWareResult<IHttpResponse>>(new MiddleWareResult<IHttpResponse>(HttpResponse.Unauthorized(),false));
             }
-                return Task.FromResult<IMiddleWareResult<IHttpResponse>>(new MiddleWareResult<IHttpResponse>(HttpResponse.OK(),false));
+                return Task.FromResult<IMiddleWareResult<IHttpResponse>>(new MiddleWareResult<IHttpResponse>(HttpResponse.OK(),true));
         }
 
         

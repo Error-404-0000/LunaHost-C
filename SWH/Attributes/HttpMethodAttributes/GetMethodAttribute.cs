@@ -15,7 +15,7 @@ namespace LunaHost.Attributes.HttpMethodAttributes
         public UrlType UrlType { get; set; }
         public GetMethodAttribute(string urlPath, UrlType urlType = UrlType.Match)
         {
-            Regex placeholderRegex = new Regex(@"{[a-zA-Z_][a-zA-Z0-9_]*}");
+            Regex placeholderRegex = new Regex(@"{.*}");
 
             // Search for any placeholders in the URL path
             var matches = placeholderRegex.Matches(urlPath);

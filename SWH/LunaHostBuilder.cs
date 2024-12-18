@@ -74,7 +74,7 @@ namespace LunaHost
 
             if (!pageContents.Any(y => y is SwaggerUIContent))
             {
-                this.Add(new SwaggerUIContent(".\\Swagger\\dist\\"));
+                this.Add(new SwaggerUIContent("C:\\Users\\Demon\\source\\repos\\LunaHost\\SWH\\Swagger\\dist\\"));
             }
         }
         public delegate void OnRequestReceived(object sender,HttpRequest request);
@@ -212,22 +212,52 @@ namespace LunaHost
                         Console.WriteLine(requestString);
 
                     HttpRequest httpRequest = new(requestString);
+                    httpRequest.SourceAddress = client.RemoteEndPoint?.ToString()?.Split(':')?[0]??""!;
                     onRequestReceived?.Invoke(this,httpRequest);
 
-                    PageContent? pageContent = PageContentCache.Invoke(GetPageContent,httpRequest);
+                    PageContent? pageContent = PageContentCache.Invoke(GetType(),GetPageContent,httpRequest);
                     IHttpResponse httpResponse = pageContent != null
-                        ? RequestCache.Invoke(TryHandleRequest,pageContent.HandleRequest, httpRequest, false, InDebugMode)
-                        : HttpResponse.NotFound();
+                        ? RequestCache.Invoke(pageContent.GetType(),
+                                              TryHandleRequest,
+                                              pageContent.HandleRequest,
+                                              httpRequest,
+                                              pageContent== DefaultPage? true: false,
+                                              InDebugMode)
+                        :HttpResponse.NotFound() ;
 
                     onResponseSent?.Invoke(this,httpRequest, httpResponse);
                     byte[] responseData = [0];
                     try
                     {
                         string response = httpResponse.GetFullResponse();
-                         responseData = Encoding.UTF8.GetBytes(response);
-                    
+                
+
+                        if (response.Contains("Base64-Encoded-Content-Start"))
+                        {
+                            // Split headers and body
+                            string[] parts = response.Split(new[] { "Base64-Encoded-Content-Start\n" }, StringSplitOptions.None);
+                            string headers = parts[0];
+                            string base64Body = parts[1];
+
+                            // Decode Base64 body back to binary
+                            byte[] binaryBody = Convert.FromBase64String(base64Body);
+
+                            // Combine headers and binary body
+                            byte[] headerBytes = Encoding.UTF8.GetBytes(headers);
+                            responseData = new byte[headerBytes.Length + binaryBody.Length];
+                            Buffer.BlockCopy(headerBytes, 0, responseData, 0, headerBytes.Length);
+                            Buffer.BlockCopy(binaryBody, 0, responseData, headerBytes.Length, binaryBody.Length);
+                        }
+                        else
+                        {
+                            // Handle responses without binary data
+                            responseData = Encoding.UTF8.GetBytes(response);
+                        }
+
+
                     }
-                    catch{
+                    catch
+                    {
                         string response = HttpResponse.InternalServerError().GetFullResponse();
                         responseData = Encoding.UTF8.GetBytes(response);
                     }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Attributes
+namespace LunaHost.Attributes
 {
     /// <summary>
     /// use to skip the prefer check on methods

@@ -12,14 +12,15 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Interfaces;
-using MiddleWares;
-using Attributes;
 using CacheLily;
+using LunaHost.MiddleWares;
+using CacheLily.Attributes;
 
 namespace LunaHost.HTTP.Main
 {
-  
+#if DEBUG
+    [NoCaching]
+#endif
     public abstract class PageContent : IDisposable,ICacheable
     {
         protected HttpRequest? request;
@@ -36,6 +37,12 @@ namespace LunaHost.HTTP.Main
         }
         public PageContent()
         {
+            if(this.GetType().GetCustomAttribute<RouteAttribute>() is RouteAttribute RA)
+            {
+                if(!RA.Route.StartsWith("/")) throw new ArgumentException("Path(s) must start with '/'.");
+                this.Path = RA.Route;
+                return;
+            }
             if (this.GetType().Name is string s && s.EndsWith("Content") && s.Length>7)
             {
                 this.Path="/"+ s.Remove(s.Length-7).ToLower();
@@ -67,7 +74,7 @@ namespace LunaHost.HTTP.Main
         /// It is like switching to a new request </param>
         /// <param name="reset">If true, it will save the original request(default) and set it back before sending the respon</param>
         /// <returns>Returns an HTTP response.</returns>
-        public IHttpResponse HandleRequest(HttpRequest httprequest =null!,bool reset=true)
+        public   IHttpResponse HandleRequest(HttpRequest httprequest =null!,bool reset=true)
         {
             if ((request == null && httprequest == null))
                 return HttpResponse.NotFound(Path);
@@ -120,19 +127,14 @@ namespace LunaHost.HTTP.Main
                 }
                 var m = method.GetCustomAttributes(true);
                 // Проверки промежуточного ПО
-#pragma warning disable
-                
-                 var respon =InvokeMiddleWareAsync(method.GetCustomAttributes(true).Where(x => x is IMiddleWare).Cast<IMiddleWare>(),method).Result;
-                if(!respon.Success)
-                    return respon.Response;
-#pragma warning
+
 
                 if (method_attribute.ContainsStaticValue)
                 {
                     Dictionary<string, string> replacements = new Dictionary<string, string>();
                     
                     var static_url = Path + method_attribute.Path;
-                    foreach (Match Key in Regex.Matches(method_attribute.Path, @"\{([a-zA-Z_][a-zA-Z0-9_]*)\}"))
+                    foreach (Match Key in Regex.Matches(method_attribute.Path, @"\{(.*?)\}"))
                     {
                         string placeholderName = Key.Groups[1].Value;
                         string Route_Value = "";
@@ -184,17 +186,27 @@ namespace LunaHost.HTTP.Main
                     break;
                 }
             }
+#pragma warning disable
 
-            
+            if (Func != null)
+            {
+                var respon = InvokeMiddleWareAsync(Func.GetCustomAttributes(true).Where(x => x is IMiddleWare).Cast<IMiddleWare>(), Func).Result;
+                if (!respon.Success)
+                    return respon.Response;
+            }
+#pragma warning
+
+
             if (Func == null)
             {
-                var response = HttpResponse.NotFound("  Not Found " + request?.Path??"");
+                var response = HttpResponse.NotFound("Not Found " + request?.Path??"");
                 response.Headers["Content-Type"] = "application/json";
                 return response;
             }
             var p_set = new List<object>() ;
             foreach (var item in Func.GetParameters())
             {
+                
                 object? paramValue = item.DefaultValue;
 
                 if (item.GetCustomAttribute<FromRoute>(true) is FromRoute routeAttr)
@@ -213,11 +225,13 @@ namespace LunaHost.HTTP.Main
                 {
                     paramValue = GetBodyValue(bodyAttr, item, request!);
                 }
-               
-                 result = InvokeMiddleWareAsync(item.GetCustomAttributes(true).Where(x => x is IMiddleWare).Cast<IMiddleWare>(), paramValue).Result;
+              
+                paramValue ??= item.ParameterType == typeof(string) ? "" : default;
+                paramValue = paramValue.GetType() == typeof(DBNull) ? default : paramValue;
+                result = InvokeMiddleWareAsync(item.GetCustomAttributes(true).Where(x => x is IMiddleWare).Cast<IMiddleWare>(), paramValue).Result;
                 if (!result.Success)
                     return result.Response;
-                p_set.Add(paramValue??(item.HasDefaultValue?item.DefaultValue:default(object)));
+                p_set.Add(paramValue??(item.HasDefaultValue?item.DefaultValue:Convert.ChangeType(null,item.ParameterType)));
             }
             p_set = p_set
                      .Select(item => item is string str ? str.Replace("\u0000", string.Empty) : item)
@@ -266,10 +280,12 @@ namespace LunaHost.HTTP.Main
                             case Enums.Preferred.Property:
                                  prefer_v = from is PropertyInfo ? from : throw new Exception($"{from.GetType()} does not match the Preferred Value.");
                                 break;
-                            case Enums.Preferred.Parameter:
-                                prefer_v = from is ParameterInfo ? from : throw new Exception($"{from.GetType()} does not match the Preferred Value.");
-                                break;
-                          
+                            //case Enums.Preferred.Parameter:
+                            //    prefer_v = from is ParameterInfo ? from : throw new Exception($"{from.GetType()} does not match the Preferred Value.");
+                            //    break;
+                            //case Enums.Preferred.ParameterValue:
+                            //    prefer_v = from is ParameterInfo e? e.DefaultValue : throw new Exception($"{from.GetType()} does not match the Preferred Value.");
+                            //    break;
                             //any preferred / Value
                             default:
                                 prefer_v = from;
@@ -350,10 +366,11 @@ namespace LunaHost.HTTP.Main
         /// <returns></returns>
         object? GetBodyValue(FromBody bodyAttr, ParameterInfo item, HttpRequest request)
         {
+            bool isValidJson = false;
             try
             {
                 JObject jsonObj = JObject.Parse(request.Body);
-
+                isValidJson = true;
                 if (bodyAttr.IsSet && jsonObj.ContainsKey(bodyAttr.Name))
                 {
                     return jsonObj[bodyAttr.Name]!.ToObject(item.ParameterType);
@@ -366,6 +383,9 @@ namespace LunaHost.HTTP.Main
             }
             catch
             {
+               if(isValidJson)
+                    return item.ParameterType == typeof(string) ? "" : default;
+                else
                 return request.Body;
             }
         }
@@ -373,7 +393,7 @@ namespace LunaHost.HTTP.Main
         {
             if (value == DBNull.Value || value is string s && s is "")
             {
-                return null; 
+                return default(object); 
             }
             try
             {
@@ -381,8 +401,9 @@ namespace LunaHost.HTTP.Main
             }
             catch
             {
-                return null ;
+                return default;
             }
+            
         }
        
         /// <summary>

@@ -1,4 +1,4 @@
-﻿using Interfaces;
+﻿
 using LunaHost;
 using LunaHost.Attributes.MiddleWares;
 using LunaHost.HTTP.Interface;
@@ -10,7 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MiddleWares
+namespace LunaHost.MiddleWares
 {
     [AsMiddleWare]
     [AttributeUsage(AttributeTargets.Method|AttributeTargets.Class)]
