@@ -11,6 +11,7 @@ namespace LunaHost.HTTP.Interface
     {
         public string Path { get; set; }
         public UrlType UrlType { get; }
+        public bool IgoneQue { get; set; }
         public bool ContainsStaticValue
         {
             get=>Regex.Match(Path, (@"{[a-zA-Z_][a-zA-Z0-9_]*}")).Success;

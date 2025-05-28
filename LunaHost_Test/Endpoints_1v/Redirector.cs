@@ -15,6 +15,7 @@ using System.Net.Http.Headers;
 using System.Web;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
+using LunaHost_Test.MiddleWares;
 
 namespace LunaHost_Test.Endpoints_1v
 {
@@ -25,28 +26,30 @@ namespace LunaHost_Test.Endpoints_1v
     {
 
 
-        [GetMethod("/{config_id}/{request}")]
-        public IHttpResponse HandleGet([FromRoute("config_id")] string configId, [FromRoute("request")] string requestPath)
+        [GetMethod("/{config_id}/{request}",IgoneQue =true)]
+        public IHttpResponse HandleGet([FromRoute("config_id"),NullNotAllow("ConfigId"), ConfigurationUpdate] string configId, [FromRoute("request")] string requestPath)
         {
+
+
             return new RequestHandler(this.request).ProcessRequest(configId, requestPath, "GET");
         }
 
-        [PostMethod("/{config_id}/{request}")]
-        public IHttpResponse HandlePost([FromRoute("config_id")] string configId, [FromRoute("request")] string requestPath)
+        [PostMethod("/{config_id}/{request}", IgoneQue = true)]
+        public IHttpResponse HandlePost([FromRoute("config_id"), NullNotAllow("ConfigId"), ConfigurationUpdate] string configId, [FromRoute("request")] string requestPath)
         {
             return new RequestHandler(this.request).ProcessRequest(configId, requestPath, "POST");
         }
-        [PutMethod("/{config_id}/{request}")]
-        public IHttpResponse HandlePut([FromRoute("config_id")] string configId, [FromRoute("request")] string requestPath)
+        [PutMethod("/{config_id}/{request}", IgoneQue = true)]
+        public IHttpResponse HandlePut([FromRoute("config_id"), NullNotAllow("ConfigId"), ConfigurationUpdate] string configId, [FromRoute("request")] string requestPath)
         {
             return new RequestHandler(this.request).ProcessRequest(configId, requestPath, "PUT");
         }
-        [DeleteMethod("/{config_id}/{request}")]
-        public IHttpResponse HandleDelete([FromRoute("config_id")] string configId, [FromRoute("request")] string requestPath)
+        [DeleteMethod("/{config_id}/{request}", IgoneQue = true)]
+        public IHttpResponse HandleDelete([FromRoute("config_id"), NullNotAllow("ConfigId"), ConfigurationUpdate] string configId, [FromRoute("request")] string requestPath)
         {
             return new RequestHandler(this.request).ProcessRequest(configId, requestPath, "DELETE");
         }
-        private string Host = "127.0.0.1";
+        private string Host = "10.0.0.71";
 
 
 

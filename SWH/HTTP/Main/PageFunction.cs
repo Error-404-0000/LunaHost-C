@@ -1,10 +1,14 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using Attributes.MiddleWare;
+using CacheLily;
+using CacheLily.Attributes;
 using LunaHost.Attributes;
 using LunaHost.Attributes.HttpMethodAttributes;
 using LunaHost.Attributes.MiddleWares;
 using LunaHost.HTTP.Interface;
 using LunaHost.Interfaces;
+using LunaHost.MiddleWares;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,9 +16,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using CacheLily;
-using LunaHost.MiddleWares;
-using CacheLily.Attributes;
+using System.Web;
 
 namespace LunaHost.HTTP.Main
 {
@@ -89,7 +91,7 @@ namespace LunaHost.HTTP.Main
 
             }
 #pragma warning disable
-            var result = InvokeMiddleWareAsync(this.GetType().GetCustomAttributes(true).Where(x => x is IMiddleWare).Cast<IMiddleWare>(),this).Result;
+            var result = InvokeMiddleWareAsync(this.GetType().GetCustomAttributes(true).Where(x => x is IMiddleWare).Cast<IMiddleWare>(),this,true).Result;
             if (!result.Success)
                 return result.Response;
 #pragma warning restore
@@ -134,7 +136,9 @@ namespace LunaHost.HTTP.Main
                     Dictionary<string, string> replacements = new Dictionary<string, string>();
                     
                     var static_url = Path + method_attribute.Path;
-                    foreach (Match Key in Regex.Matches(method_attribute.Path, @"\{(.*?)\}"))
+                    int cout = 0;
+                    var matches = Regex.Matches(method_attribute.Path, @"\{(.*?)\}");
+                    foreach (Match Key in matches)
                     {
                         string placeholderName = Key.Groups[1].Value;
                         string Route_Value = "";
@@ -150,14 +154,14 @@ namespace LunaHost.HTTP.Main
                             Route_Value = GetSegmentFromIndex(request.Path, static_url.IndexOf(Key.Value));
 
                         }
-
+                       
                         Route_values.Add(placeholderName, Route_Value);
 
                         replacements.Add($"{{{placeholderName}}}", Route_Value);
                         static_url = static_url.Replace('{' + placeholderName + '}', Route_Value);
 
                     }
-
+                 
                     foreach (var replacement in replacements)
                     {
                         method_attribute.Path = method_attribute.Path.Replace(replacement.Key, replacement.Value);
@@ -166,9 +170,9 @@ namespace LunaHost.HTTP.Main
                 if (method_attribute.Path == "/")
                     method_attribute.Path = "//";
                 string cleanedGetAttPath = RemoveFirstInstanceOfSegment(method_attribute.Path ?? "//", "/");
-                string cleanedRequestPath = RemoveFirstInstanceOfSegment(RemoveAfterQuestionMark(request.Path), RemoveFirstInstanceOfSegment(Path, "/"));
+                string cleanedRequestPath = RemoveFirstInstanceOfSegment(method_attribute.IgoneQue? request.Path:RemoveAfterQuestionMark(request.Path), RemoveFirstInstanceOfSegment(Path, "/"));
 
-                if (cleanedGetAttPath != cleanedRequestPath && method_attribute.UrlType == UrlType.Match)
+                if (cleanedGetAttPath.TrimEnd('/') != cleanedRequestPath.TrimEnd('/') && method_attribute.UrlType == UrlType.Match)
                 {
                     continue; 
                 }
@@ -180,7 +184,12 @@ namespace LunaHost.HTTP.Main
                     break;
                 }
 
-                else if (method_attribute.UrlType == UrlType.After && cleanedRequestPath.StartsWith(e))
+                else if (method_attribute.UrlType == UrlType.After && cleanedRequestPath.StartsWith(e.TrimEnd('/')))
+                {
+                    Func = method;
+                    break;
+                }
+                else if(method_attribute.UrlType == UrlType.WideCard && cleanedRequestPath.TrimStart('/').StartsWith(method_attribute.Path.TrimEnd('*')))
                 {
                     Func = method;
                     break;
@@ -190,7 +199,7 @@ namespace LunaHost.HTTP.Main
 
             if (Func != null)
             {
-                var respon = InvokeMiddleWareAsync(Func.GetCustomAttributes(true).Where(x => x is IMiddleWare).Cast<IMiddleWare>(), Func).Result;
+                var respon = InvokeMiddleWareAsync(Func.GetCustomAttributes(true).Where(x => x is IMiddleWare).Cast<IMiddleWare>(), Func,true).Result;
                 if (!respon.Success)
                     return respon.Response;
             }
@@ -211,11 +220,11 @@ namespace LunaHost.HTTP.Main
 
                 if (item.GetCustomAttribute<FromRoute>(true) is FromRoute routeAttr)
                 {
-                    paramValue = GetRouteValue(Route_values,routeAttr, item);
+                    paramValue = HttpUtility.UrlDecode((string)GetRouteValue(Route_values,routeAttr, item));
                 }
                 else if (item.GetCustomAttribute<FromUrlQuery>(true) is FromUrlQuery queryAttr)
                 {
-                    paramValue = GetQueryValue(queryAttr, item);
+                    paramValue = HttpUtility.UrlDecode((string)GetQueryValue(queryAttr, item));
                 }
                 else if (item.GetCustomAttribute<FromHeader>(true) is FromHeader headerAttr)
                 {
@@ -228,7 +237,7 @@ namespace LunaHost.HTTP.Main
               
                 paramValue ??= item.ParameterType == typeof(string) ? "" : default;
                 paramValue = paramValue.GetType() == typeof(DBNull) ? default : paramValue;
-                result = InvokeMiddleWareAsync(item.GetCustomAttributes(true).Where(x => x is IMiddleWare).Cast<IMiddleWare>(), paramValue).Result;
+                result = InvokeMiddleWareAsync(item.GetCustomAttributes(true).Where(x => x is IMiddleWare).Cast<IMiddleWare>(), paramValue,false).Result;
                 if (!result.Success)
                     return result.Response;
                 p_set.Add(paramValue??(item.HasDefaultValue?item.DefaultValue:Convert.ChangeType(null,item.ParameterType)));
@@ -244,14 +253,15 @@ namespace LunaHost.HTTP.Main
 
         }
 
-        public async Task<IMiddleWareResult<IHttpResponse>> InvokeMiddleWareAsync(IEnumerable<IMiddleWare> MiddleWares,object from)
+        public async Task<IMiddleWareResult<IHttpResponse>> InvokeMiddleWareAsync(IEnumerable<IMiddleWare> MiddleWares,object from,bool SkipParamValue)
         {
             if (MiddleWares is null)
                 goto ret;
             dynamic prefer_v = null;
             foreach (var MiddleWare in MiddleWares)
             {
-                
+                if (SkipParamValue && MiddleWare.GetType().GetCustomAttribute<ParameterMiddleWare>() is not null)
+                    continue;
                 if (from is not null && from.GetType().GetCustomAttribute<NoPreferences>() is not null)
                     goto call;
                 switch (MiddleWare.GetType().GetCustomAttribute<NoPreferences>())
@@ -280,9 +290,9 @@ namespace LunaHost.HTTP.Main
                             case Enums.Preferred.Property:
                                  prefer_v = from is PropertyInfo ? from : throw new Exception($"{from.GetType()} does not match the Preferred Value.");
                                 break;
-                            //case Enums.Preferred.Parameter:
-                            //    prefer_v = from is ParameterInfo ? from : throw new Exception($"{from.GetType()} does not match the Preferred Value.");
-                            //    break;
+                            case Enums.Preferred.Parameter:
+                                prefer_v = from is ParameterInfo ? from : throw new Exception($"{from.GetType()} does not match the Preferred Value.");
+                                break;
                             //case Enums.Preferred.ParameterValue:
                             //    prefer_v = from is ParameterInfo e? e.DefaultValue : throw new Exception($"{from.GetType()} does not match the Preferred Value.");
                             //    break;

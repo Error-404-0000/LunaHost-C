@@ -15,6 +15,7 @@ namespace LunaHost.MiddleWares
 {
     [AsMiddleWare]
     [AttributeUsage(AttributeTargets.Method)]
+    [NoPreferences]
     public class AuthorizationAttribute : Attribute, IMiddleWare
     {
 

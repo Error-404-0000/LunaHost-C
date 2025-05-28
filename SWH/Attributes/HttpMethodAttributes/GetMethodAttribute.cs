@@ -13,8 +13,16 @@ namespace LunaHost.Attributes.HttpMethodAttributes
         public string Path { get; set; } = "/";
 
         public UrlType UrlType { get; set; }
+        public bool IgoneQue { get ; set; }
+
         public GetMethodAttribute(string urlPath, UrlType urlType = UrlType.Match)
         {
+            if (urlPath.EndsWith("*"))
+            {
+                urlType = UrlType.WideCard;
+                urlPath = urlPath.TrimEnd('*');
+                goto CONT;
+            }
             Regex placeholderRegex = new Regex(@"{.*}");
 
             // Search for any placeholders in the URL path
@@ -29,7 +37,7 @@ namespace LunaHost.Attributes.HttpMethodAttributes
                     urlType = UrlType.After;
                 }
             }
-
+            CONT:
             // Set the Path property
             Path = urlPath;
             UrlType = urlType;

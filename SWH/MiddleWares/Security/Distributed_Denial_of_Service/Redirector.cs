@@ -18,7 +18,7 @@ namespace LunaHost.MiddleWares.Security.DDoSProtection
     {
         private static readonly ConcurrentDictionary<int, RequestSrc> RequestSrcs = new();
         private const int MaxEntries = 300; // Maximum entries in the dictionary
-        private const int MaxRequestsPerSecond = 30000; // Maximum requests allowed per second
+        private const int MaxRequestsPerSecond = 300; // Maximum requests allowed per second
         private const int TimeoutSeconds = 20; // Timeout duration in seconds
         private static readonly TimeSpan CleanupInterval = TimeSpan.FromMinutes(1);
         private static readonly object CleanupLock = new();

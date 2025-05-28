@@ -13,8 +13,9 @@ namespace LunaHost_Test.Visitors
         public string NickName => IP;
         public DateTime FirstViste { get; set; }
         public DateTime LastViste { get; set; }
+  
         public string LastUrl {  get; set; }
         public List<RequestInformation> RequestInformation { get; set; } = new();
-        public bool BlockUser { get; set; }=false;
+        public bool DontLog { get; set; }=false;
     }
 }

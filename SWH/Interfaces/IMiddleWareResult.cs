@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace LunaHost.Interfaces
 {
 
-    public interface IMiddleWareResult<T1> where T1 : IHttpResponse
+    public interface IMiddleWareResult<out T1> where T1 : IHttpResponse
     {
         T1 Response { get;  }
         bool Success { get;  }

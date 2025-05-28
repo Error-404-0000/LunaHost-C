@@ -10,13 +10,15 @@ using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
+using LunaHost_Test.Visitors;
+using Newtonsoft.Json;
 
 namespace LunaHost_Test.Routes
 {
     public class RequestHandler : IDisposable
     {
         private readonly HttpClient _client;
-        private readonly string ProxyDomain = "http://127.0.0.1"; // Proxy base domain
+        private readonly string ProxyDomain = "http://10.0.0.71"; // Proxy base domain
         private const string DefaultUserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36";
         private HttpRequest request;
 
@@ -28,7 +30,8 @@ namespace LunaHost_Test.Routes
             ServicePointManager.ServerCertificateValidationCallback = delegate { return true; };
 
             var handler = new HttpClientHandler
-            {    AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate| System.Net.DecompressionMethods.All,
+            {
+                AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate | System.Net.DecompressionMethods.All,
 
 
                 ServerCertificateCustomValidationCallback = (msg, cert, chain, errors) => true
@@ -37,12 +40,118 @@ namespace LunaHost_Test.Routes
             _client = new HttpClient(handler)
             {
                 Timeout = TimeSpan.FromSeconds(30)
-            }; 
+            };
 
             _client.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
             _client.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("deflate"));
         }
 
+        private RequestType StringToRequest(string method)
+        {
+            return method.ToUpper() switch
+            {
+                "POST" => RequestType.POST,
+                "PUT" => RequestType.PUT,
+                "GET" => RequestType.GET,
+                "DELETE" => RequestType.DELETE,
+                _ => RequestType.Other
+            };
+        }
+        private (bool shouldlog, Guid? id) VisitorControl(ref Configuration config, string requestPath)
+        {
+            bool log = false;
+            var Req = new Visitors.RequestInformation();
+            if (config.TargetPathLogs.Any(x => x.Path == "*" && x.LogType == LogType.Log) || config.TargetPathLogs.Count == 0)
+            {
+                var vistor = (config.Visitors.FirstOrDefault(x => x.IP == request.SourceAddress));
+                if (vistor != null)
+                {
+                    if (vistor.DontLog)
+                    {
+                        return (false, null);
+                    }
+                    else
+                    {
+                        Req.Url = requestPath;
+                        Req.RawBody = request.Body;
+                        Req.Title = requestPath;
+                        Req.Headers = request.Headers;
+                        Req.RequestType = StringToRequest(nameof(request.Method));
+                        vistor.RequestInformation.Add(Req);
+                        return (true, Req.Id);
+                    }
+                }
+                else
+                {
+                    var v = new Visitor()
+                    {
+                        FirstViste = DateTime.Now,
+                        LastUrl = requestPath,
+                        LastViste = DateTime.Now,
+                        IP = request.SourceAddress,
+                        DontLog = false,
+
+                    };
+                    Req.Url = requestPath;
+                    Req.RawBody = request.Body;
+                    Req.Headers = request.Headers;
+                    Req.RequestType = StringToRequest(nameof(request.Method));
+                    Req.Title = requestPath;
+                    v.RequestInformation.Add(Req);
+                    config.Visitors.Add(v);
+                    return (true, Req.Id);
+
+                }
+
+
+            }
+            else if (config.TargetPathLogs.Any(x => x.Path.Contains(requestPath) && x.LogType == LogType.Log) || config.TargetPathLogs.Count == 0)
+            {
+                var vistor = (config.Visitors.FirstOrDefault(x => x.IP == request.SourceAddress));
+                if (vistor != null)
+                {
+                    if (vistor.DontLog)
+                    {
+                        return (false, null);
+                    }
+                    else
+                    {
+                        Req.Url = requestPath;
+                        Req.RawBody =request.Body;
+                        Req.Title = requestPath;
+                        Req.Headers = request.Headers;
+                        Req.RequestType = StringToRequest(nameof(request.Method));
+                        vistor.RequestInformation.Add(Req);
+                        return (true, Req.Id);
+                    }
+                }
+                else
+                {
+                    var v = new Visitor()
+                    {
+                        FirstViste = DateTime.Now,
+                        LastUrl = requestPath,
+                        LastViste = DateTime.Now,
+                        IP = request.SourceAddress,
+                        DontLog = false,
+
+                    };
+                    Req.Url = requestPath;
+                    Req.RawBody = request.Body;
+                    Req.Title = requestPath;
+                    v.RequestInformation.Add(Req);
+                    config.Visitors.Add(v);
+                    Req.Headers = request.Headers;
+                    Req.RequestType = StringToRequest(nameof(request.Method));
+                    return (true, Req.Id);
+
+                }
+
+
+            }
+            return (false, null);
+        }
+        private bool IsStandAloneDomain = false;
         public IHttpResponse ProcessRequest(string configId, string requestPath, string method)
         {
             if (request is null)
@@ -52,11 +161,11 @@ namespace LunaHost_Test.Routes
             requestPath = requestPath
                 .Replace("__Q__", "?")
                 .Replace("__D__", "&");
-
             var config = AppDb.Configurations.FirstOrDefault(x => x.Id.ToString().Replace("-", "") == configId);
+
             if (config == null)
                 return HttpResponse.NotFound();
-
+            var Logrespon = Task.Run(() => VisitorControl(ref config, requestPath));
             var originalUrl = BuildUrl(config.Domain, requestPath);
 
             var forwardedRequest = new HttpRequestMessage(new HttpMethod(method), originalUrl);
@@ -68,7 +177,24 @@ namespace LunaHost_Test.Routes
                     forwardedRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
                 }
             }
+            if(request.Headers.ContainsKey("Referer"))
+            {
+                request.Headers.Remove("Referer");
+                //var @ref = request.Path.Split("/");
+                //if(@ref.Length > 2)
+                //{
+                //   var h = string.Join("/", @ref.Skip(3));
+                //    if(h.StartsWith("http"))
+                //    request.Headers["Referer"]= string.Join("/", @ref.Skip(3));
+                //    else
+                //        request.Headers["Referer"] = "https://" + string.Join("/", @ref.Skip(3));
+                //}
+                //else
+                //{
+                //    request.Headers["Referer"] = config.Domain;
+                //}
 
+            }
             forwardedRequest.Headers.UserAgent.ParseAdd(DefaultUserAgent);
 
             if (method == "POST" || method == "PUT")
@@ -77,7 +203,7 @@ namespace LunaHost_Test.Routes
                 requestBody = requestBody.Replace("__Q__", "?").Replace("__D__", "&");
 
                 // FIXED ENCTYPE: Changed fallback from x-www-form-urlencoded to application/octet-stream
-                var contentType_ = request.Headers["Content-Type"] ?? "application/octet-stream";
+                var contentType_ = request.Headers.ContainsKey("Content-Type") ? request.Headers["Content-Type"] : "application/octet-stream";
 
                 forwardedRequest.Content = new StringContent(requestBody, Encoding.UTF8, contentType_);
             }
@@ -91,7 +217,7 @@ namespace LunaHost_Test.Routes
             }
             HttpResponse httpResponse = new()
             {
-                StatusCode = (int)originalResponse.StatusCode
+                StatusCode = (int)originalResponse.StatusCode is 301 or 308 ? 202 : (int)originalResponse.StatusCode
             };
 
             var contentTypeHeader = originalResponse.Content.Headers.ContentType;
@@ -169,6 +295,23 @@ namespace LunaHost_Test.Routes
                 httpResponse.Headers.Remove("Content-Length");
             }
 
+            if (!(Logrespon.IsFaulted || Logrespon.IsCanceled) && Logrespon.IsCompleted && Logrespon.Result is var logresp)
+            {
+                var r = config.Visitors.FirstOrDefault(x => x.RequestInformation.FirstOrDefault(x => x.Id == logresp.id) is not null)?.RequestInformation.FirstOrDefault(x => x.Id == logresp.id);
+                if (r != null)
+                {
+                    r.Response = new RequestInformation()
+                    {
+                        RawBody = request.Body!,
+                        Title = requestPath,
+                        Headers = httpResponse.Headers,
+                        StatusCode = httpResponse.StatusCode,
+                        Timestamp = DateTime.Now,
+
+                        Url = requestPath
+                    };
+                }
+            }
             return httpResponse;
         }
 
@@ -298,14 +441,33 @@ namespace LunaHost_Test.Routes
         private string ModifyJsContent(Configuration config, string content)
         {
             // Rewrite URLs in JS strings
+            if (string.IsNullOrEmpty(content)) return content; // Prevent processing empty content
+
             var middlemanBase = $"/sv/{config.Id.ToString().Replace("-", "")}";
-            string jsUrlPattern = @"(['""])(https?:\/\/[^'""]+)\1";
+
+            // **Fix 1:** Corrected regex and ensured safer capturing groups
+            string jsUrlPattern = @"""((https?:\/\/[^\s'""<>]+|[a-zA-Z0-9\-]+\.[a-zA-Z]{2,})(\/[^\s'""<>]*)?)""";
+
             content = Regex.Replace(content, jsUrlPattern, match =>
             {
-                string quote = match.Groups[1].Value;
-                string originalUrl = match.Groups[2].Value;
+                string quote = match.Value[0].ToString();
+                string originalUrl = match.Groups[1].Value; // Get full URL
+
+                // **Fix 2:** Avoid rewriting already modified URLs
+                if (originalUrl.StartsWith(middlemanBase) || originalUrl.Contains(config.Domain))
+                    return match.Value;
+
                 string newUrl = RewriteSingleUrl(originalUrl, middlemanBase, config.Domain);
                 return $"{quote}{newUrl}{quote}";
+            }, RegexOptions.IgnoreCase);
+
+            // **Fix 3:** Corrected relative path replacement
+            content = Regex.Replace(content, @"""\/([^""]+)""", match =>
+            {
+                string originalUrl = match.Groups[1].Value;
+                string newUrl = $"{middlemanBase.TrimStart('/')}/{originalUrl}";
+
+                return $"\"{newUrl}\""; // Ensuring correct formatting in JS
             }, RegexOptions.IgnoreCase);
 
             return content;
@@ -358,6 +520,7 @@ namespace LunaHost_Test.Routes
             {
                 return requestPath.StartsWith("http") ? requestPath : "https://" + requestPath;
             }
+
             return $"{(domain.StartsWith("http") ? domain : "https://" + domain.TrimEnd('/'))}/{requestPath.TrimStart('/')}";
         }
 

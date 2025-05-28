@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -11,10 +12,16 @@ namespace LunaHost.Attributes.HttpMethodAttributes
     public class DeleteMethodAttribute : Attribute, IMethod
     {
         public string Path { get; set; } = "/";
-
+        public bool IgoneQue { get; set; }
         public UrlType UrlType { get; set; }
         public DeleteMethodAttribute(string urlPath, UrlType urlType = UrlType.Match)
         {
+            if (urlPath.EndsWith("*"))
+            {
+                urlType = UrlType.WideCard;
+                urlPath = urlPath.TrimEnd('*');
+                goto CONT;
+            }
             Regex placeholderRegex = new Regex(@"{.*}");
 
             // Search for any placeholders in the URL path
@@ -29,7 +36,7 @@ namespace LunaHost.Attributes.HttpMethodAttributes
                     urlType = UrlType.After;
                 }
             }
-
+            CONT:
             // Set the Path property
             Path = urlPath;
             UrlType = urlType;

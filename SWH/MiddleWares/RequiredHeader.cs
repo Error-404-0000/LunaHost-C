@@ -6,6 +6,7 @@ using LunaHost.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -16,18 +17,21 @@ namespace LunaHost.MiddleWares
     /// </summary>
     ///
     [AsMiddleWare]
-    [AttributeUsage(AttributeTargets.Method)]
-    public class RequiredHeaderAttribute(string header) : Attribute, IMiddleWare
+    [AttributeUsage(AttributeTargets.Method |AttributeTargets.Class)]
+    public class RequiredHeaderAttribute(params string[] headers) : Attribute, IMiddleWare
     {
         public Task<IMiddleWareResult<IHttpResponse>> ExecuteAsync(HttpRequest request, dynamic? none)
         {
-            
-            if (!request.Headers.ContainsKey(header))
-                return Task.FromResult<IMiddleWareResult<IHttpResponse>>(new MiddleWareResult<IHttpResponse>(HttpResponse.BadRequest(), false));
-            else
+
+            foreach (var header in headers)
             {
-                return Task.FromResult<IMiddleWareResult<IHttpResponse>>(new MiddleWareResult<IHttpResponse>(HttpResponse.OK(),true));
+                if (!request.Headers.ContainsKey(header))
+                    return Task.FromResult<IMiddleWareResult<IHttpResponse>>(new MiddleWareResult<IHttpResponse>(HttpResponse.BadRequest($"Missing Header : {header}"), false));
+
             }
+
+            return Task.FromResult<IMiddleWareResult<IHttpResponse>>(new MiddleWareResult<IHttpResponse>(HttpResponse.OK(), true));
+
 
         }
     }

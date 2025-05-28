@@ -15,10 +15,10 @@ namespace LunaHost.HTTP.Main
 
         public int CacheCode { get; set; }
 
-        public HttpResponse()
+        public HttpResponse(string contentType = "text/html; charset=utf-8")
         {
             SetStatus(200, "OK");
-            Headers["Content-Type"] = "text/html; charset=utf-8";
+            Headers["Content-Type"] = contentType;
         }
 
         // Set the HTTP Status Code and Reason Phrase
@@ -119,11 +119,14 @@ namespace LunaHost.HTTP.Main
 
 
         // Factory methods for common HTTP responses
-        public static HttpResponse OK(string body = "OK")
+        public static HttpResponse OK(string body = "OK",string contentType = null)
         {
             var response = new HttpResponse();
             response.SetStatus(200, "OK");
-            response.SetBody(body);
+            if(contentType is not null)
+                response.SetBody(body,contentType);
+            else
+                response.SetBody(body);
             return response;
         }
 

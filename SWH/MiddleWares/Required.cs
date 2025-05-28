@@ -1,15 +1,17 @@
-﻿using LunaHost.Attributes;
+﻿using Attributes.MiddleWare;
+using LunaHost;
+using LunaHost.Attributes;
+using LunaHost.Attributes.MiddleWares;
 using LunaHost.Enums;
-using LunaHost.Interfaces;
 using LunaHost.HTTP.Interface;
 using LunaHost.HTTP.Main;
-using LunaHost;
+using LunaHost.Interfaces;
 using System.Text.RegularExpressions;
-using LunaHost.Attributes.MiddleWares;
 
 namespace LunaHost.MiddleWares;
 [AttributeUsage(AttributeTargets.Parameter)]
 [AsMiddleWare]
+[ParameterMiddleWare]
 public class RequiredAttribute : Attribute, IMiddleWare
 {
     private readonly int _minLen;

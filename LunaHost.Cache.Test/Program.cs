@@ -1,14 +1,35 @@
-﻿namespace LunaHost.Cache.Test
+﻿using LunaHost.HTTP.Interface;
+
+namespace LunaHost.Test
 {
- 
+
     public class Program
     {
-        public int CacheCode { get; set; }
-        public int _add {  get; set; }
-        public Program Add(int x1,int x2)=> new() { _add = x1 + x2 };
         static void Main(string[] args)
         {
-     
+            using (LunaHostBuilder host = new LunaHostBuilder())
+            {
+                host.Errorpage = (HTMLContent)"<h1>Error Page</h1>";
+                host.Add(new HelloWorld());
+                host.Add(new UserRoute());
+                host.Port = 80;
+                host.UseSwagger = true;
+                ////
+                //host.onRequestReceived += Host_onRequestReceived;
+                //host.onResponseSent += Host_onResponseSent;
+                host.BuildAsync().Wait();
+            }
+        }
+
+        private static void Host_onResponseSent(object sender, HttpRequest request, IHttpResponse respond)
+        {
+            Console.WriteLine($"[RESPOND] :{respond}");
+        }
+
+        private static void Host_onRequestReceived(object sender, HttpRequest request)
+        {
+            Console.WriteLine($"[REC] : {request}");
         }
     }
+
 }

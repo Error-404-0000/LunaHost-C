@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using System;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace LunaHost_Test.Endpoints_1v
@@ -63,11 +64,11 @@ namespace LunaHost_Test.Endpoints_1v
         /// <param name="auth">Authorization UserToken from the header.</param>
         /// <param name="token">Session UserToken from the header.</param>
         /// <returns>User details if authentication is successful; otherwise, an Unauthorized response.</returns>
-        [RequiredHeader("Authorization")]
         [GetMethod("/user-info")]
+        [RequiredHeader("Authorization", "Token")]
         public IHttpResponse GetUserInformation(
             [FromHeader("Authorization")] string auth,
-            [FromHeader("token")] string token)
+            [FromHeader("Token")] string token)
         {
             // Find user by authorization and UserToken
             if (AppDb.Users.FirstOrDefault(x => x.UserAuth == auth && x.Tokens.Any(t => t.UserToken == token && t.IsTokenAlive)) is User user)
@@ -88,20 +89,22 @@ namespace LunaHost_Test.Endpoints_1v
             return HttpResponse.Unauthorized();
         }
 
+
         /// <summary>
         /// Changes the password of an authenticated user and invalidates all tokens.
         /// </summary>
         /// <param name="auth">Authorization UserToken from the header.</param>
         /// <param name="newpassword">The new password to set for the user.</param>
         /// <returns>Success response if the operation completes; otherwise, Unauthorized.</returns>
-        [RequiredHeader("Authorization")]
         [PutMethod("/change-password")]
+        [RequiredHeader("Authorization", "Token")]
         public IHttpResponse ChangePassword(
             [FromHeader("Authorization")] string auth,
+            [FromHeader("Token")] string Token,
             [Required(minLen: 6, message: "invalid password", regex: @".+"), FromBody] string newpassword)
         {
             // Find the user by authorization UserToken
-            var user = AppDb.Users.FirstOrDefault(x => x.UserAuth == auth);
+            var user = AppDb.Users.FirstOrDefault(x => x.UserAuth == auth && x.Tokens.Any(t=>t.UserToken==Token&&t.IsTokenAlive));
             if (user is null) return HttpResponse.Unauthorized();
 
             // Update the password and invalidate tokens
@@ -110,7 +113,16 @@ namespace LunaHost_Test.Endpoints_1v
 
             return HttpResponse.OK("Password updated successfully");
         }
+        [RequiredHeader("Authorization", "Token")]
+        [PutMethod("/change-username")]
+        public IHttpResponse ChangeUserName([FromHeader("Authorization")] string auth, [FromHeader("Token")] string Token, [Required(minLen: 5, maxLen: 10, message:"invalid username", regex: @"\w+"),FromBody] string UserName)
+        {
+            var user = AppDb.Users.FirstOrDefault(x => x.UserAuth == auth && x.Tokens.Any(t => t.UserToken == Token && t.IsTokenAlive));
+            if (user is null) return HttpResponse.Unauthorized();
+            user.UserName = UserName;
+            return HttpResponse.OK("UserName Changed.");
 
+        }
         /// <summary>
         /// Generates a new session UserToken for the user based on username and password.
         /// </summary>

@@ -74,7 +74,7 @@ namespace LunaHost
 
             if (!pageContents.Any(y => y is SwaggerUIContent))
             {
-                this.Add(new SwaggerUIContent("C:\\Users\\Demon\\source\\repos\\LunaHost\\SWH\\Swagger\\dist\\"));
+                this.Add(new SwaggerUIContent(@"C:\Users\Demon\source\repos\LunaHost\SWH\Swagger\dist\"));//TODO:AUTO CHANGE
             }
         }
         public delegate void OnRequestReceived(object sender,HttpRequest request);
@@ -205,8 +205,8 @@ namespace LunaHost
                 using (client)
                 {
                     byte[] data = new byte[32000];
-                    int bytesReceived = await client.ReceiveAsync(data, SocketFlags.None);
-                    string requestString = Encoding.UTF8.GetString(data, 0, bytesReceived);
+                    int bytesReceived = await client.ReceiveAsync(data);
+                    string requestString = Encoding.Default.GetString(data, 0, bytesReceived);
 
                     if (LogRequest)
                         Console.WriteLine(requestString);

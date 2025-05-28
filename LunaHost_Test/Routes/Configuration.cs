@@ -19,6 +19,7 @@ namespace LunaHost_Test.Routes
         public string StartPath {  get; set; }
         public bool HasStartPath =>StartPath != null;
         public List<TargetPathConfiguration> TargetPathConfiguration { get; set; } = new();
+        public List<TargetPathLog> TargetPathLogs { get; set; } = new();
         public bool EnableLogging {  get; set; }
         public List<Visitor> Visitors { get; set; }
         public bool Disabled { get; set; }

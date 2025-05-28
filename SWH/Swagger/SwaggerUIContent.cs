@@ -17,9 +17,9 @@ namespace Swegger
 
 
             [GetMethod]
-            public IHttpResponse ServeUI([FromUrlQuery("file")] string? file = "index.html")
+            public IHttpResponse ServerUI([FromUrlQuery("file")] string? file = "index.html")
             {
-                 var filePath = System.IO.Path.Combine(_swaggerUiPath, file??"index.html");
+                 var filePath = System.IO.Path.Combine(_swaggerUiPath, string.IsNullOrEmpty(file) ?file= "index.html":file);
             
                 if (File.Exists(filePath))
                 {
