@@ -1,6 +1,6 @@
 # LunaHost - Lightweight Custom HTTP Server
 
-**LunaHost** is a minimal and efficient custom HTTP server built in C#. It supports flexible routing, middleware, and includes optional Swagger UI for API documentation.
+**LunaHost** is a minimal and efficient custom HTTP server built in C#. It supports flexible routing, middleware, and includes optional Swagger UI for API documentation.DI
 
 
 🐸##**Example Code :/LunaHost.Cache.Test**
@@ -40,6 +40,39 @@ public IHttpResponse GetUser([Required(3, 20, "Invalid username", new Regex("^[a
 {
     return HttpResponse.OK("User found");
 }
+```
+###Injection
+```csharp
+   public class MembersCount
+    {
+        public int ActiveMembers { get; set; }
+        public int TotalMembers { get; set; }
+        public int MemberCount { get; set; }
+    }
+    [Route("/members/active")]
+    public class GetActiveMembers : PageContent
+    {
+      
+        [GetMethod("/")]
+        public IHttpResponse GetActiveMember([DInject] MembersCount members) //to par
+        {
+            return HttpResponse.OK($"Active Members: {members.TotalMembers}");
+        }
+    }
+    [Route("/hello")]
+    public class HelloWorld_ : PageContent
+    {
+        [DInject] //From prop
+        public  MembersCount members { get; set; }
+        [GetMethod]
+        public IHttpResponse GetHelloWorld()
+        {
+            members.TotalMembers++;
+            return HttpResponse.OK("Hello World!");
+        }
+    }
+container.AddSingleton<MembersCount>(); //or
+container.AddTransient <MembersCount> ();
 ```
 
 ### Swagger UI (Optional)
