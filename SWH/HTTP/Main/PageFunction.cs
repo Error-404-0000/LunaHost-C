@@ -1,9 +1,12 @@
-﻿using Attributes.MiddleWare;
+﻿using Attributes;
+using Attributes.MiddleWare;
 using CacheLily;
 using CacheLily.Attributes;
+using Interfaces;
 using LunaHost.Attributes;
 using LunaHost.Attributes.HttpMethodAttributes;
 using LunaHost.Attributes.MiddleWares;
+using LunaHost.Dependency;
 using LunaHost.HTTP.Interface;
 using LunaHost.Interfaces;
 using LunaHost.MiddleWares;
@@ -69,6 +72,38 @@ namespace LunaHost.HTTP.Main
                 return false;
             return true;
         }
+        public void HandleDependencyContainer(IDependencyContainer dependencyContainer)
+        {
+            if (dependencyContainer is null) return;
+            foreach (var prop in this.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(x=>x.GetCustomAttribute<DInjectAttribute>(true) is not null))
+            {
+                if( dependencyContainer.GetService(prop.PropertyType) is object service)
+                {
+                    prop.SetValue(this, service);
+                }
+                else
+                {
+                    continue;
+                }
+            }
+        }
+        public object HandleDependencyContainerParameter(IDependencyContainer dependencyContainer,ParameterInfo parameter)
+        {
+            if(dependencyContainer is null) return parameter.HasDefaultValue ? parameter.DefaultValue : null;
+            
+            if (parameter.GetCustomAttribute<DInjectAttribute>(true) is not null)
+            {
+                if (dependencyContainer.GetService(parameter.ParameterType) is object service)
+                {
+                    return service;
+                }
+                else
+                {
+                    return parameter.HasDefaultValue ? parameter.DefaultValue : null;
+                }
+            }
+            return parameter.HasDefaultValue ? parameter.DefaultValue : null;
+        }
         /// <summary>
         /// Tries to handle an HTTP request by finding the right page to show/reply with.
         /// </summary>
@@ -76,7 +111,7 @@ namespace LunaHost.HTTP.Main
         /// It is like switching to a new request </param>
         /// <param name="reset">If true, it will save the original request(default) and set it back before sending the respon</param>
         /// <returns>Returns an HTTP response.</returns>
-        public   IHttpResponse HandleRequest(HttpRequest httprequest =null!,bool reset=true)
+        public   IHttpResponse HandleRequest(HttpRequest httprequest =null!,IDependencyContainer dependencyContainer=null, bool reset=true)
         {
             if ((request == null && httprequest == null))
                 return HttpResponse.NotFound(Path);
@@ -234,8 +269,11 @@ namespace LunaHost.HTTP.Main
                 {
                     paramValue = GetBodyValue(bodyAttr, item, request!);
                 }
-              
-                paramValue ??= item.ParameterType == typeof(string) ? "" : default;
+                else if(item.GetCustomAttribute<DInjectAttribute>(true) is DInjectAttribute)
+                {
+                    paramValue = HandleDependencyContainerParameter(dependencyContainer, item);
+                }
+                    paramValue ??= item.ParameterType == typeof(string) ? "" : default;
                 paramValue = paramValue.GetType() == typeof(DBNull) ? default : paramValue;
                 result = InvokeMiddleWareAsync(item.GetCustomAttributes(true).Where(x => x is IMiddleWare).Cast<IMiddleWare>(), paramValue,false).Result;
                 if (!result.Success)
@@ -247,6 +285,7 @@ namespace LunaHost.HTTP.Main
                      .ToList();
             if (reset)
                 request = reset_request;
+            HandleDependencyContainer(dependencyContainer);
             return (HttpResponse)Func.Invoke(this,p_set.ToArray())!;
 
 

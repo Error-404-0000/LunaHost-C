@@ -1,13 +1,14 @@
-﻿using Newtonsoft.Json;
+﻿using CacheLily;
+using Interfaces;
+using LunaHost.Dependency;
+using LunaHost.HTTP.Helper;
 using LunaHost.HTTP.Interface;
 using LunaHost.HTTP.Main;
-
+using Newtonsoft.Json;
+using Swegger;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using LunaHost.HTTP.Helper;
-using Swegger;
-using CacheLily;
 
 namespace LunaHost
 {
@@ -92,15 +93,16 @@ namespace LunaHost
         private bool _disposed = false;
         private bool Stop { get; set; } = false;
         private Socket socket;
-
-        public LunaHostBuilder(int Capacity)
+        private IDependencyContainer? _dependencyContainer;
+        public LunaHostBuilder(int Capacity, IDependencyContainer dependencyContainer)
         {
             pageContents.Add(new HealthCheckPage());
             this.Capacity = Capacity;
-           
-        }
-        public LunaHostBuilder() : this(10 << 2) { }
+            _dependencyContainer = dependencyContainer;
 
+        }
+        public LunaHostBuilder(IDependencyContainer dependencyContainer) : this(10 << 2, dependencyContainer) { }
+        public LunaHostBuilder() : this(null) { }
         public void Add(PageContent content)
         {
             if (content == null)
@@ -179,11 +181,11 @@ namespace LunaHost
         public delegate IHttpResponse HandleRequest(HttpRequest request,bool reset);
 
         //this try to handle the Request and if it failed it will return error or 404
-        private IHttpResponse TryHandleRequest(Delegate page,HttpRequest request,bool reset, bool ReturnError)
+        private IHttpResponse TryHandleRequest(Delegate page,HttpRequest request,IDependencyContainer dependencyContainer,bool reset, bool ReturnError)
         {
             try
             {
-               return (IHttpResponse)page.DynamicInvoke(request, reset)!;
+               return (IHttpResponse)page.DynamicInvoke(request, dependencyContainer, reset)!;
             }
             catch(Exception ex)
             {
@@ -221,7 +223,8 @@ namespace LunaHost
                                               TryHandleRequest,
                                               pageContent.HandleRequest,
                                               httpRequest,
-                                              pageContent== DefaultPage? true: false,
+                                              _dependencyContainer,
+                                              pageContent == DefaultPage? true: false,
                                               InDebugMode)
                         :HttpResponse.NotFound() ;
 
