@@ -41,7 +41,7 @@ public IHttpResponse GetUser([Required(3, 20, "Invalid username", new Regex("^[a
     return HttpResponse.OK("User found");
 }
 ```
-###Injection
+# Injection
 ```csharp
    public class MembersCount
     {
